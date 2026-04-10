@@ -12,24 +12,24 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    let reader: import('@zxing/browser').BrowserMultiFormatReader | null = null
+    let controls: import('@zxing/browser').IScannerControls | null = null
     let stopped = false
 
     const startScanner = async () => {
       try {
         const { BrowserMultiFormatReader } = await import('@zxing/browser')
-        reader = new BrowserMultiFormatReader()
+        const reader = new BrowserMultiFormatReader()
         const devices = await BrowserMultiFormatReader.listVideoInputDevices()
         if (devices.length === 0) {
           setError('カメラが見つかりません')
           return
         }
         const deviceId = devices[devices.length - 1].deviceId
-        await reader.decodeFromVideoDevice(deviceId, videoRef.current!, (result, err) => {
+        controls = await reader.decodeFromVideoDevice(deviceId, videoRef.current!, (result, err) => {
           if (stopped) return
           if (result) {
             stopped = true
-            reader?.reset()
+            controls?.stop()
             onDetected(result.getText())
           }
           if (err && !(err instanceof Error && err.message.includes('No MultiFormat'))) {
@@ -46,7 +46,7 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
 
     return () => {
       stopped = true
-      reader?.reset()
+      controls?.stop()
     }
   }, [onDetected])
 
