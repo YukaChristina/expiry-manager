@@ -17,12 +17,22 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
     let scanner: import('html5-qrcode').Html5Qrcode | null = null
 
     const startScanner = async () => {
-      const { Html5Qrcode } = await import('html5-qrcode')
-      scanner = new Html5Qrcode('qr-reader')
+      const { Html5Qrcode, Html5QrcodeSupportedFormats } = await import('html5-qrcode')
+      scanner = new Html5Qrcode('qr-reader', {
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E,
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.CODE_39,
+        ],
+        verbose: false,
+      })
       try {
         await scanner.start(
           { facingMode: 'environment' },
-          { fps: 10, qrbox: { width: 250, height: 150 } },
+          { fps: 15, qrbox: { width: 280, height: 120 } },
           (code) => {
             scanner?.stop()
             onDetectedRef.current(code)
