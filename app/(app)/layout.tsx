@@ -18,7 +18,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-          <a href="/" className="text-xl font-bold text-gray-800">🥫 消費期限管理 [TEST]</a>
+          <a href="/" className="text-xl font-bold text-gray-800">🥫 消費期限管理</a>
           <nav className="flex gap-4 text-sm items-center">
             <a href="/" className="text-gray-600 hover:text-gray-900">一覧</a>
             <a href="/items/new" className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700">
