@@ -1,22 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseServer } from '@/lib/supabase-server'
-import { createClient } from '@supabase/supabase-js'
 
-function getUserSupabase(req: NextRequest) {
-  const authHeader = req.headers.get('authorization') ?? ''
-  const token = authHeader.replace('Bearer ', '')
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { global: { headers: { Authorization: `Bearer ${token}` } } }
-  )
-}
+const TEST_USER_ID = 'test-user'
 
 export async function GET(req: NextRequest) {
-  const supabase = getUserSupabase(req)
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
   const { searchParams } = new URL(req.url)
   const category = searchParams.get('category')
   const search = searchParams.get('search')
@@ -24,7 +11,7 @@ export async function GET(req: NextRequest) {
   let query = supabaseServer
     .from('items')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('user_id', TEST_USER_ID)
     .order('expiry_date', { ascending: true })
 
   if (category && category !== 'all') query = query.eq('category', category)
@@ -36,14 +23,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const supabase = getUserSupabase(req)
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
   const body = await req.json()
   const { data, error } = await supabaseServer
     .from('items')
-    .insert({ ...body, user_id: user.id })
+    .insert({ ...body, user_id: TEST_USER_ID })
     .select()
     .single()
 
