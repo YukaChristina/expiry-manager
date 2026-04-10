@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
 import BarcodeScanner from './BarcodeScanner'
 import ExpiryInput from './ExpiryInput'
 
@@ -61,13 +60,9 @@ export default function RegisterFlow() {
   const handleSubmit = async () => {
     setSubmitting(true)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
       const res = await fetch('/api/items', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session?.access_token}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
       if (res.ok) {
