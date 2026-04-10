@@ -79,7 +79,7 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
           </div>
         </div>
         {error && <p className="p-4 text-red-500 text-sm text-center">{error}</p>}
-        <p className="p-4 text-xs text-gray-400 text-center">{debug}</p>
+        <p className="p-4 text-sm text-red-600 font-bold text-center">{debug}</p>
         <p className="pb-4 text-sm text-gray-500 text-center">バーコードをカメラに向けてください</p>
       </div>
     </div>
