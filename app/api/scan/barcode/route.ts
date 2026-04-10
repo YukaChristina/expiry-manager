@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 async function tryOpenFoodFacts(barcode: string) {
-  const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`)
-  const text = await res.arrayBuffer()
-  const decoded = new TextDecoder('utf-8').decode(text)
-  const data = JSON.parse(decoded)
-  if (data.status === 1) {
-    const p = data.product
-    return p.product_name_ja || p.product_name || null
+  try {
+    const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`)
+    const data = await res.json()
+    if (data.status === 1) {
+      const p = data.product
+      const name = p.product_name_ja || p.product_name || null
+      return name
+    }
+  } catch {
+    // ignore
   }
   return null
 }
