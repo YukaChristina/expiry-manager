@@ -32,20 +32,18 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
         hints.set(DecodeHintType.TRY_HARDER, true)
 
         const reader = new BrowserMultiFormatReader(hints)
-        const devices = await BrowserMultiFormatReader.listVideoInputDevices()
-        if (devices.length === 0) {
-          setError('カメラが見つかりません')
-          return
-        }
-        const deviceId = devices[devices.length - 1].deviceId
-        controls = await reader.decodeFromVideoDevice(deviceId, videoRef.current!, (result, err) => {
-          if (stopped) return
-          if (result) {
-            stopped = true
-            controls?.stop()
-            onDetected(result.getText())
+        controls = await reader.decodeFromConstraints(
+          { video: { facingMode: 'environment' } },
+          videoRef.current!,
+          (result, _err) => {
+            if (stopped) return
+            if (result) {
+              stopped = true
+              controls?.stop()
+              onDetected(result.getText())
+            }
           }
-        })
+        )
       } catch (e) {
         setError('カメラの起動に失敗しました')
         console.error(e)
