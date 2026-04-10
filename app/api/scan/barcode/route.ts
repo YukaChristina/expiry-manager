@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 
 async function tryOpenFoodFacts(barcode: string) {
   try {
-    const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`)
+    const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`, {
+      headers: { 'User-Agent': 'expiry-manager/1.0' },
+      signal: AbortSignal.timeout(5000),
+    })
     const data = await res.json()
     if (data.status === 1) {
       const p = data.product
-      const name = p.product_name_ja || p.product_name || null
-      return name
+      return p.product_name_ja || p.product_name || null
     }
   } catch {
     // ignore
@@ -31,10 +33,24 @@ export async function GET(req: NextRequest) {
   const barcode = req.nextUrl.searchParams.get('code')
   if (!barcode) return NextResponse.json({ error: 'No barcode' }, { status: 400 })
 
-  const name = await tryOpenFoodFacts(barcode) ?? await tryUpcItemDb(barcode)
+  let offName: string | null = null
+  let upcName: string | null = null
+  let offError = ''
+
+  try {
+    offName = await tryOpenFoodFacts(barcode)
+  } catch (e) {
+    offError = String(e)
+  }
+
+  if (!offName) {
+    upcName = await tryUpcItemDb(barcode)
+  }
+
+  const name = offName ?? upcName
 
   if (!name) {
-    return NextResponse.json({ found: false })
+    return NextResponse.json({ found: false, debug: { offError } })
   }
 
   return NextResponse.json({ found: true, name })
