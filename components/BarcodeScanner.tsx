@@ -63,7 +63,7 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
       stopped = true
       controls?.stop()
     }
-  }, [onDetected])
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
