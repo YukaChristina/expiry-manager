@@ -45,7 +45,7 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-sm">
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
-          <h3 className="font-bold text-gray-800">バーコードをスキャン</h3>
+          <h3 className="font-bold text-gray-800">バーコードをスキャン v2</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
         </div>
         <div id="qr-reader" className="w-full" />
