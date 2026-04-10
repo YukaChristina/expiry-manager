@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 
 type Props = {
   onDetected: (code: string) => void
@@ -8,54 +8,36 @@ type Props = {
 }
 
 export default function BarcodeScanner({ onDetected, onClose }: Props) {
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const [error, setError] = useState('')
   const onDetectedRef = useRef(onDetected)
   onDetectedRef.current = onDetected
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
 
   useEffect(() => {
-    let controls: import('@zxing/browser').IScannerControls | null = null
-    let stopped = false
+    let scanner: import('html5-qrcode').Html5Qrcode | null = null
 
     const startScanner = async () => {
+      const { Html5Qrcode } = await import('html5-qrcode')
+      scanner = new Html5Qrcode('qr-reader')
       try {
-        const { BrowserMultiFormatReader } = await import('@zxing/browser')
-        const { DecodeHintType, BarcodeFormat } = await import('@zxing/library')
-
-        const hints = new Map()
-        hints.set(DecodeHintType.POSSIBLE_FORMATS, [
-          BarcodeFormat.EAN_13,
-          BarcodeFormat.EAN_8,
-          BarcodeFormat.UPC_A,
-          BarcodeFormat.UPC_E,
-          BarcodeFormat.CODE_128,
-          BarcodeFormat.CODE_39,
-        ])
-        hints.set(DecodeHintType.TRY_HARDER, true)
-
-        const reader = new BrowserMultiFormatReader(hints)
-        controls = await reader.decodeFromConstraints(
-          { video: { facingMode: 'environment' } },
-          videoRef.current!,
-          (result, _err) => {
-            if (stopped) return
-            if (result) {
-              stopped = true
-              controls?.stop()
-              onDetectedRef.current(result.getText())
-            }
-          }
+        await scanner.start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: { width: 250, height: 150 } },
+          (code) => {
+            scanner?.stop()
+            onDetectedRef.current(code)
+          },
+          () => {}
         )
       } catch (e) {
-        setError('カメラの起動に失敗しました: ' + (e instanceof Error ? e.message : String(e)))
+        console.error(e)
       }
     }
 
     startScanner()
 
     return () => {
-      stopped = true
-      controls?.stop()
+      scanner?.stop().catch(() => {})
     }
   }, [])
 
@@ -66,13 +48,7 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
           <h3 className="font-bold text-gray-800">バーコードをスキャン</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
         </div>
-        <div className="relative bg-black aspect-video">
-          <video ref={videoRef} className="w-full h-full object-cover" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-48 h-24 border-2 border-white/70 rounded" />
-          </div>
-        </div>
-        {error && <p className="p-4 text-red-500 text-sm text-center">{error}</p>}
+        <div id="qr-reader" className="w-full" />
         <p className="p-4 text-sm text-gray-500 text-center">バーコードをカメラに向けてください</p>
       </div>
     </div>
