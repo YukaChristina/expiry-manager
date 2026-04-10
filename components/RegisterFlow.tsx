@@ -26,6 +26,7 @@ export default function RegisterFlow() {
   const [showScanner, setShowScanner] = useState(false)
   const [scanning, setScanning] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState('')
   const [debugInfo, setDebugInfo] = useState('')
   const [form, setForm] = useState<FormData>({
     name: '',
@@ -59,6 +60,7 @@ export default function RegisterFlow() {
 
   const handleSubmit = async () => {
     setSubmitting(true)
+    setSubmitError('')
     try {
       const res = await fetch('/api/items', {
         method: 'POST',
@@ -69,10 +71,10 @@ export default function RegisterFlow() {
       if (res.ok) {
         router.push('/')
       } else {
-        alert(`登録失敗: ${JSON.stringify(data)}`)
+        setSubmitError(`登録失敗 (${res.status}): ${JSON.stringify(data)}`)
       }
     } catch (err) {
-      alert(`エラー: ${String(err)}`)
+      setSubmitError(`エラー: ${String(err)}`)
     } finally {
       setSubmitting(false)
     }
@@ -227,6 +229,9 @@ export default function RegisterFlow() {
             </tbody>
           </table>
 
+          {submitError && (
+            <div className="bg-red-50 rounded-lg p-3 text-xs text-red-700 break-all">{submitError}</div>
+          )}
           <div className="flex gap-3">
             <button onClick={() => setStep(2)}
               className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-xl text-sm hover:bg-gray-50">
