@@ -1,23 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+async function tryOpenFoodFacts(barcode: string) {
+  const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`)
+  const data = await res.json()
+  if (data.status === 1) {
+    const p = data.product
+    return p.product_name_ja || p.product_name || null
+  }
+  return null
+}
+
+async function tryUpcItemDb(barcode: string) {
+  const res = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${barcode}`, {
+    headers: { 'Accept': 'application/json' }
+  })
+  if (!res.ok) return null
+  const data = await res.json()
+  if (data.items?.length > 0) {
+    return data.items[0].title || null
+  }
+  return null
+}
+
 export async function GET(req: NextRequest) {
   const barcode = req.nextUrl.searchParams.get('code')
   if (!barcode) return NextResponse.json({ error: 'No barcode' }, { status: 400 })
 
-  const res = await fetch(
-    `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`
-  )
-  const data = await res.json()
+  const name = await tryOpenFoodFacts(barcode) ?? await tryUpcItemDb(barcode)
 
-  if (data.status !== 1) {
+  if (!name) {
     return NextResponse.json({ found: false })
   }
 
-  const product = data.product
-  return NextResponse.json({
-    found: true,
-    name: product.product_name_ja || product.product_name || '',
-    category: product.categories_tags?.[0] || '',
-    imageUrl: product.image_url || '',
-  })
+  return NextResponse.json({ found: true, name })
 }
