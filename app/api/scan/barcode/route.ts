@@ -1,21 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-async function tryOpenFoodFacts(barcode: string) {
-  try {
-    const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`, {
-      headers: { 'User-Agent': 'expiry-manager/1.0' },
-      signal: AbortSignal.timeout(5000),
-    })
-    const data = await res.json()
-    if (data.status === 1) {
-      const p = data.product
-      return p.product_name_ja || p.product_name || null
-    }
-  } catch {
-    // ignore
-  }
-  return null
-}
 
 async function tryUpcItemDb(barcode: string) {
   const res = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${barcode}`, {
@@ -33,15 +17,25 @@ export async function GET(req: NextRequest) {
   const barcode = req.nextUrl.searchParams.get('code')
   if (!barcode) return NextResponse.json({ error: 'No barcode' }, { status: 400 })
 
-  let offName: string | null = null
+  let offResult: { status?: number; name?: string; error?: string } = {}
   let upcName: string | null = null
-  let offError = ''
 
   try {
-    offName = await tryOpenFoodFacts(barcode)
+    const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`, {
+      headers: { 'User-Agent': 'expiry-manager/1.0' },
+      signal: AbortSignal.timeout(8000),
+    })
+    const data = await res.json()
+    offResult.status = data.status
+    if (data.status === 1) {
+      const p = data.product
+      offResult.name = p.product_name_ja || p.product_name || ''
+    }
   } catch (e) {
-    offError = String(e)
+    offResult.error = String(e)
   }
+
+  const offName = offResult.name || null
 
   if (!offName) {
     upcName = await tryUpcItemDb(barcode)
@@ -50,7 +44,7 @@ export async function GET(req: NextRequest) {
   const name = offName ?? upcName
 
   if (!name) {
-    return NextResponse.json({ found: false, debug: { offError } })
+    return NextResponse.json({ found: false, debug: offResult })
   }
 
   return NextResponse.json({ found: true, name })
