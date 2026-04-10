@@ -65,11 +65,14 @@ export default function RegisterFlow() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       })
+      const data = await res.json()
       if (res.ok) {
         router.push('/')
+      } else {
+        alert(`登録失敗: ${JSON.stringify(data)}`)
       }
     } catch (err) {
-      console.error(err)
+      alert(`エラー: ${String(err)}`)
     } finally {
       setSubmitting(false)
     }
