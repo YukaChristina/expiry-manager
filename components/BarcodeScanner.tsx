@@ -10,6 +10,7 @@ type Props = {
 export default function BarcodeScanner({ onDetected, onClose }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [error, setError] = useState('')
+  const [debug, setDebug] = useState('初期化中...')
 
   useEffect(() => {
     let controls: import('@zxing/browser').IScannerControls | null = null
@@ -17,6 +18,7 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
 
     const startScanner = async () => {
       try {
+        setDebug('ライブラリ読み込み中...')
         const { BrowserMultiFormatReader } = await import('@zxing/browser')
         const { DecodeHintType, BarcodeFormat } = await import('@zxing/library')
 
@@ -31,6 +33,7 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
         ])
         hints.set(DecodeHintType.TRY_HARDER, true)
 
+        setDebug('カメラ起動中...')
         const reader = new BrowserMultiFormatReader(hints)
         controls = await reader.decodeFromConstraints(
           { video: { facingMode: 'environment' } },
@@ -40,12 +43,16 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
             if (result) {
               stopped = true
               controls?.stop()
+              setDebug(`検出: ${result.getText()}`)
               onDetected(result.getText())
             }
           }
         )
+        setDebug('スキャン中...')
       } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e)
         setError('カメラの起動に失敗しました')
+        setDebug(`エラー: ${msg}`)
         console.error(e)
       }
     }
@@ -72,7 +79,8 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
           </div>
         </div>
         {error && <p className="p-4 text-red-500 text-sm text-center">{error}</p>}
-        <p className="p-4 text-sm text-gray-500 text-center">バーコードをカメラに向けてください</p>
+        <p className="p-4 text-xs text-gray-400 text-center">{debug}</p>
+        <p className="pb-4 text-sm text-gray-500 text-center">バーコードをカメラに向けてください</p>
       </div>
     </div>
   )
