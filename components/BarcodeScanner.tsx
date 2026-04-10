@@ -11,6 +11,8 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [error, setError] = useState('')
   const [debug, setDebug] = useState('初期化中...')
+  const onDetectedRef = useRef(onDetected)
+  onDetectedRef.current = onDetected
 
   useEffect(() => {
     let controls: import('@zxing/browser').IScannerControls | null = null
@@ -35,25 +37,31 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
 
         setDebug('カメラ起動中...')
         const reader = new BrowserMultiFormatReader(hints)
-        controls = await reader.decodeFromConstraints(
-          { video: { facingMode: 'environment' } },
-          videoRef.current!,
-          (result, _err) => {
-            if (stopped) return
-            if (result) {
-              stopped = true
-              controls?.stop()
-              setDebug(`検出: ${result.getText()}`)
-              onDetected(result.getText())
-            }
-          }
+
+        // デバイス一覧を取得して背面カメラを優先
+        const devices = await BrowserMultiFormatReader.listVideoInputDevices()
+        setDebug(`カメラ数: ${devices.length}`)
+        const backCamera = devices.find(d =>
+          d.label.toLowerCase().includes('back') ||
+          d.label.toLowerCase().includes('rear') ||
+          d.label.includes('背面')
         )
+        const deviceId = backCamera?.deviceId ?? devices[devices.length - 1]?.deviceId
+
+        controls = await reader.decodeFromVideoDevice(deviceId, videoRef.current!, (result, _err) => {
+          if (stopped) return
+          if (result) {
+            stopped = true
+            controls?.stop()
+            setDebug(`検出: ${result.getText()}`)
+            onDetectedRef.current(result.getText())
+          }
+        })
         setDebug('スキャン中...')
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e)
         setError('カメラの起動に失敗しました')
         setDebug(`エラー: ${msg}`)
-        console.error(e)
       }
     }
 
@@ -63,7 +71,7 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
       stopped = true
       controls?.stop()
     }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
