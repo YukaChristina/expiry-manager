@@ -18,7 +18,20 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
     const startScanner = async () => {
       try {
         const { BrowserMultiFormatReader } = await import('@zxing/browser')
-        const reader = new BrowserMultiFormatReader()
+        const { DecodeHintType, BarcodeFormat } = await import('@zxing/library')
+
+        const hints = new Map()
+        hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+          BarcodeFormat.EAN_13,
+          BarcodeFormat.EAN_8,
+          BarcodeFormat.UPC_A,
+          BarcodeFormat.UPC_E,
+          BarcodeFormat.CODE_128,
+          BarcodeFormat.CODE_39,
+        ])
+        hints.set(DecodeHintType.TRY_HARDER, true)
+
+        const reader = new BrowserMultiFormatReader(hints)
         const devices = await BrowserMultiFormatReader.listVideoInputDevices()
         if (devices.length === 0) {
           setError('カメラが見つかりません')
@@ -31,9 +44,6 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
             stopped = true
             controls?.stop()
             onDetected(result.getText())
-          }
-          if (err && !(err instanceof Error && err.message.includes('No MultiFormat'))) {
-            // 継続中のエラーは無視
           }
         })
       } catch (e) {
