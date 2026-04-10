@@ -14,11 +14,14 @@ type FormData = {
   location: string
   quantity: number
   notify_days: number
+  send_email: boolean
   is_disaster: boolean
   barcode: string
 }
 
 const STEPS = ['スキャン', '情報入力', '確認']
+const NOTIFY_OPTIONS = [3, 7, 14, 30]
+const USER_EMAIL = process.env.NEXT_PUBLIC_DEMO_EMAIL ?? ''
 
 export default function RegisterFlow() {
   const router = useRouter()
@@ -35,6 +38,7 @@ export default function RegisterFlow() {
     location: '',
     quantity: 1,
     notify_days: 14,
+    send_email: true,
     is_disaster: false,
     barcode: '',
   })
@@ -184,6 +188,38 @@ export default function RegisterFlow() {
             />
           </div>
 
+          {/* 通知設定 */}
+          <div className="border border-gray-200 rounded-xl p-4 space-y-3">
+            <label className="block text-sm font-medium text-gray-700">リマインドするタイミング</label>
+            <div className="flex gap-2 flex-wrap">
+              {NOTIFY_OPTIONS.map((days) => (
+                <button
+                  key={days}
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, notify_days: days }))}
+                  className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                    form.notify_days === days
+                      ? 'bg-indigo-500 text-white border-indigo-500'
+                      : 'bg-white text-gray-600 border-gray-300 hover:border-indigo-300'
+                  }`}
+                >
+                  {days}日前
+                </button>
+              ))}
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer pt-1">
+              <input
+                type="checkbox"
+                checked={form.send_email}
+                onChange={(e) => setForm((f) => ({ ...f, send_email: e.target.checked }))}
+                className="w-4 h-4 rounded"
+              />
+              <span className="text-sm text-gray-700">
+                {USER_EMAIL ? `${USER_EMAIL} にメールを送りますか？` : 'メールでお知らせする'}
+              </span>
+            </label>
+          </div>
+
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={form.is_disaster}
               onChange={(e) => setForm((f) => ({ ...f, is_disaster: e.target.checked }))}
@@ -219,6 +255,7 @@ export default function RegisterFlow() {
                 ['保存場所', form.location || '未設定'],
                 ['数量', String(form.quantity)],
                 ['通知タイミング', `${form.notify_days}日前`],
+                ['メール通知', form.send_email ? '送る' : '送らない'],
                 ['防災備蓄', form.is_disaster ? '○' : '-'],
               ].map(([label, value]) => (
                 <tr key={label}>
