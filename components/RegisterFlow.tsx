@@ -27,6 +27,7 @@ export default function RegisterFlow() {
   const [showScanner, setShowScanner] = useState(false)
   const [scanning, setScanning] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [debugInfo, setDebugInfo] = useState('')
   const [form, setForm] = useState<FormData>({
     name: '',
     category: 'other',
@@ -46,11 +47,12 @@ export default function RegisterFlow() {
     try {
       const res = await fetch(`/api/scan/barcode?code=${code}`)
       const data = await res.json()
+      setDebugInfo(`コード: ${code}\nレスポンス: ${JSON.stringify(data, null, 2)}`)
       if (data.found && data.name) {
         setForm((f) => ({ ...f, name: data.name }))
       }
     } catch (err) {
-      console.error(err)
+      setDebugInfo(`コード: ${code}\nエラー: ${String(err)}`)
     } finally {
       setScanning(false)
     }
@@ -113,6 +115,9 @@ export default function RegisterFlow() {
             <p className="text-sm mt-1">食品のJANコードを読み取ります</p>
           </button>
           {scanning && <p className="text-center text-sm text-indigo-600">商品情報を取得中...</p>}
+          {debugInfo && (
+            <pre className="bg-gray-100 rounded-lg p-3 text-xs text-gray-700 overflow-auto whitespace-pre-wrap">{debugInfo}</pre>
+          )}
           {form.name && (
             <div className="bg-green-50 rounded-lg p-3 text-sm text-green-700">
               ✓ 「{form.name}」が見つかりました
