@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
 import BarcodeScanner from './BarcodeScanner'
 import ExpiryInput from './ExpiryInput'
 
@@ -21,11 +22,17 @@ type FormData = {
 
 const STEPS = ['スキャン', '情報入力', '確認']
 const NOTIFY_OPTIONS = [3, 7, 14, 30]
-const USER_EMAIL = process.env.NEXT_PUBLIC_DEMO_EMAIL ?? ''
 
 export default function RegisterFlow() {
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
+  const [userEmail, setUserEmail] = useState('')
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserEmail(session?.user?.email ?? '')
+    })
+  }, [])
   const [showScanner, setShowScanner] = useState(false)
   const [scanning, setScanning] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -215,7 +222,7 @@ export default function RegisterFlow() {
                 className="w-4 h-4 rounded"
               />
               <span className="text-sm text-gray-700">
-                {USER_EMAIL ? `${USER_EMAIL} にメールを送りますか？` : 'メールでお知らせする'}
+                {userEmail ? `${userEmail} にメールを送りますか？` : 'メールでお知らせする'}
               </span>
             </label>
           </div>
