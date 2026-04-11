@@ -22,6 +22,8 @@ export async function GET(req: NextRequest) {
 
   for (const item of items ?? []) {
     const expiry = new Date(item.expiry_date)
+
+    // 期限日
     calendar.createEvent({
       start: expiry,
       end: expiry,
@@ -29,6 +31,19 @@ export async function GET(req: NextRequest) {
       summary: `【期限】${item.name}`,
       description: `場所: ${item.location ?? '未設定'} / 数量: ${item.quantity}`,
     })
+
+    // リマインド日（notify_days日前）
+    if (item.notify_days) {
+      const remind = new Date(expiry)
+      remind.setDate(remind.getDate() - item.notify_days)
+      calendar.createEvent({
+        start: remind,
+        end: remind,
+        allDay: true,
+        summary: `【リマインド】${item.name} まであと${item.notify_days}日`,
+        description: `消費期限: ${item.expiry_date} / 場所: ${item.location ?? '未設定'} / 数量: ${item.quantity}`,
+      })
+    }
   }
 
   return new NextResponse(calendar.toString(), {
