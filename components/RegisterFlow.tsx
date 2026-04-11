@@ -130,12 +130,22 @@ export default function RegisterFlow() {
             <p className="text-sm mt-1">食品のJANコードを読み取ります</p>
           </button>
           {scanning && <p className="text-center text-sm text-indigo-600">商品情報を取得中...</p>}
-          {debugInfo && (
-            <pre className="bg-gray-100 rounded-lg p-3 text-xs text-gray-700 overflow-auto whitespace-pre-wrap">{debugInfo}</pre>
-          )}
           {form.name && (
             <div className="bg-green-50 rounded-lg p-3 text-sm text-green-700">
               ✓ 「{form.name}」が見つかりました
+            </div>
+          )}
+          {debugInfo && !form.name && (
+            <div className="bg-yellow-50 rounded-lg p-4 space-y-2">
+              <p className="text-sm text-yellow-800 font-medium">商品が見つかりませんでした</p>
+              <p className="text-xs text-yellow-600">商品名を直接入力してください</p>
+              <input
+                type="text"
+                placeholder="例: 谷川連峰の天然水"
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                className="w-full border border-yellow-300 rounded-lg px-3 py-2 text-sm bg-white"
+                autoFocus
+              />
             </div>
           )}
           <button
