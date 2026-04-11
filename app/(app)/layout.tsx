@@ -9,8 +9,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [checking, setChecking] = useState(true)
 
   useEffect(() => {
-    setChecking(false)
-  }, [])
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) router.push('/login')
+      else setChecking(false)
+    })
+  }, [router])
 
   if (checking) return <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-400">読み込み中...</div>
 
