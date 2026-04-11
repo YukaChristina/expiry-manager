@@ -19,7 +19,7 @@ async function tryRakuten(barcode: string): Promise<string | null> {
   try {
     const appId = process.env.RAKUTEN_APP_ID
     if (!appId) return null
-    const url = `https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706?applicationId=${appId}&keyword=${barcode}&hits=1&format=json`
+    const url = `https://app.rakuten.co.jp/services/api/IchibaItem/Search/20170706?applicationId=${appId}&janCode=${barcode}&hits=1&format=json`
     const res = await fetch(url, { signal: AbortSignal.timeout(5000) })
     const data = await res.json()
     const item = data.Items?.[0]?.Item
