@@ -28,7 +28,7 @@ export async function GET() {
     if (!email) continue
 
     await resend.emails.send({
-      from: 'notify@yourdomain.com',
+      from: 'Expiry Manager <onboarding@resend.dev>',
       to: email,
       subject: `【期限注意】${item.name} があと${daysLeft}日で期限切れです`,
       html: `
