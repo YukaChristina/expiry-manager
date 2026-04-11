@@ -7,11 +7,15 @@ import { supabase } from '@/lib/supabase'
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
   const [checking, setChecking] = useState(true)
+  const [email, setEmail] = useState('')
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) router.push('/login')
-      else setChecking(false)
+      else {
+        setEmail(session.user.email ?? '')
+        setChecking(false)
+      }
     })
   }, [router])
 
@@ -27,6 +31,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <a href="/items/new" className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg hover:bg-indigo-700">
               + 登録
             </a>
+            <span className="text-gray-400 text-xs hidden sm:block">{email}</span>
             <button
               onClick={async () => { await supabase.auth.signOut(); router.push('/login') }}
               className="text-gray-400 hover:text-gray-600 text-xs"
