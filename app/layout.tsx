@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "消費期限管理",
-  description: "食品の消費期限を管理するアプリ",
+  title: "蔵出し管理帳",
+  description: "食品・備蓄品の蔵出し管理アプリ",
 };
 
 export default function RootLayout({

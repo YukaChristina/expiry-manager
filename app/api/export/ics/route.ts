@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     .select('*')
     .eq('user_id', user.id)
 
-  const calendar = ical({ name: '消費期限カレンダー' })
+  const calendar = ical({ name: '蔵出しカレンダー' })
 
   for (const item of items ?? []) {
     const expiry = new Date(item.expiry_date)

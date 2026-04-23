@@ -50,7 +50,7 @@ export default function LoginPage() {
         <div className="text-center mb-6">
           <p className="text-2xl mb-1">🏚️</p>
           <h1 className="text-xl font-bold text-[#1a2e52] tracking-wide">蔵出し管理帳</h1>
-          <p className="text-xs text-[#64748b] mt-1">消費期限・備蓄品の管理</p>
+          <p className="text-xs text-[#64748b] mt-1">食品・備蓄品の蔵出し管理</p>
         </div>
 
         <button
