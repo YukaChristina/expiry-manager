@@ -45,49 +45,51 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl border border-gray-200 p-8 w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">ログイン</h1>
-        <p className="text-sm text-gray-500 mb-6">消費期限管理アプリ</p>
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="bg-[#F5F0E8] rounded border border-[#c8d4e8] shadow-2xl p-8 w-full max-w-sm">
+        <div className="text-center mb-6">
+          <p className="text-2xl mb-1">🏚️</p>
+          <h1 className="text-xl font-bold text-[#1a2e52] tracking-wide">蔵出し管理帳</h1>
+          <p className="text-xs text-[#64748b] mt-1">消費期限・備蓄品の管理</p>
+        </div>
 
-        {/* デモログイン */}
         <button
           onClick={handleDemo}
           disabled={loading}
-          className="w-full mb-4 border-2 border-indigo-200 text-indigo-600 py-2.5 rounded-xl font-semibold hover:bg-indigo-50 disabled:opacity-50 text-sm"
+          className="w-full mb-4 border-2 border-[#3d5a9c] text-[#3d5a9c] py-2.5 rounded font-semibold hover:bg-[#eef2fa] disabled:opacity-50 text-sm transition-colors"
         >
           デモアカウントでログイン
         </button>
 
         <div className="flex items-center gap-3 mb-4">
-          <div className="flex-1 h-px bg-gray-200" />
-          <span className="text-xs text-gray-400">または</span>
-          <div className="flex-1 h-px bg-gray-200" />
+          <div className="flex-1 h-px bg-[#c8d4e8]" />
+          <span className="text-xs text-[#94a3b8]">または</span>
+          <div className="flex-1 h-px bg-[#c8d4e8]" />
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">メールアドレス</label>
+            <label className="block text-sm font-semibold text-[#1a2e52] mb-1">メールアドレス</label>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
               required autoComplete="email"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+              className="w-full border border-[#c8d4e8] rounded px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#3d5a9c]" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">パスワード</label>
+            <label className="block text-sm font-semibold text-[#1a2e52] mb-1">パスワード</label>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
               required autoComplete="current-password"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+              className="w-full border border-[#c8d4e8] rounded px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#3d5a9c]" />
           </div>
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {error && <p className="text-red-600 text-xs">{error}</p>}
           <button type="submit" disabled={loading}
-            className="w-full bg-indigo-600 text-white py-2.5 rounded-xl font-semibold hover:bg-indigo-700 disabled:opacity-50">
+            className="w-full bg-[#1a2e52] text-white py-2.5 rounded font-semibold hover:bg-[#0f1d36] disabled:opacity-50 transition-colors text-sm">
             {loading ? 'ログイン中...' : 'ログイン'}
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-500 mt-4">
+        <p className="text-center text-xs text-[#94a3b8] mt-5">
           アカウントをお持ちでない方は{' '}
-          <a href="/signup" className="text-indigo-600 hover:underline">新規登録</a>
+          <a href="/signup" className="text-[#3d5a9c] hover:underline">新規登録</a>
         </p>
       </div>
     </div>

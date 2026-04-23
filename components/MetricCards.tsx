@@ -17,18 +17,18 @@ export default function MetricCards({ items }: Props) {
   const disaster = items.filter((i) => i.is_disaster).length
 
   const cards = [
-    { label: '登録数', value: total, color: 'bg-indigo-50 text-indigo-700' },
-    { label: '期限切れ', value: expired, color: 'bg-red-50 text-red-700' },
-    { label: '30日以内', value: within30, color: 'bg-orange-50 text-orange-700' },
-    { label: '防災備蓄数', value: disaster, color: 'bg-green-50 text-green-700' },
+    { label: '登録数', value: total, text: 'text-[#1a2e52]', sub: 'text-[#3d5a9c]' },
+    { label: '期限切れ', value: expired, text: 'text-red-700', sub: 'text-red-400' },
+    { label: '30日以内', value: within30, text: 'text-orange-700', sub: 'text-orange-500' },
+    { label: '防災備蓄', value: disaster, text: 'text-[#2d5a1a]', sub: 'text-[#4a8a2d]' },
   ]
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+    <div className="grid grid-cols-4 gap-3">
       {cards.map((card) => (
-        <div key={card.label} className={`rounded-xl p-4 ${card.color}`}>
-          <p className="text-2xl font-bold">{card.value}</p>
-          <p className="text-sm mt-1">{card.label}</p>
+        <div key={card.label} className="rounded border border-[#c8b89a] bg-[#F5F0E8] p-3 shadow-sm text-center">
+          <p className={`text-2xl font-bold ${card.text}`}>{card.value}</p>
+          <p className={`text-xs mt-1 ${card.sub}`}>{card.label}</p>
         </div>
       ))}
     </div>

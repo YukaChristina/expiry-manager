@@ -25,34 +25,37 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl border border-gray-200 p-8 w-full max-w-sm">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">新規登録</h1>
-        <p className="text-sm text-gray-500 mb-6">消費期限管理アプリ</p>
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="bg-[#F5F0E8] rounded border border-[#c8d4e8] shadow-2xl p-8 w-full max-w-sm">
+        <div className="text-center mb-6">
+          <p className="text-2xl mb-1">🏚️</p>
+          <h1 className="text-xl font-bold text-[#1a2e52] tracking-wide">蔵出し管理帳</h1>
+          <p className="text-xs text-[#64748b] mt-1">新規アカウント登録</p>
+        </div>
 
         <form onSubmit={handleSignup} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">メールアドレス</label>
+            <label className="block text-sm font-semibold text-[#1a2e52] mb-1">メールアドレス</label>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
               required autoComplete="email"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+              className="w-full border border-[#c8d4e8] rounded px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#3d5a9c]" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">パスワード（6文字以上）</label>
+            <label className="block text-sm font-semibold text-[#1a2e52] mb-1">パスワード（6文字以上）</label>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
               required minLength={6} autoComplete="new-password"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" />
+              className="w-full border border-[#c8d4e8] rounded px-3 py-2 text-sm bg-white focus:outline-none focus:border-[#3d5a9c]" />
           </div>
-          {error && <p className="text-red-500 text-sm">{error}</p>}
+          {error && <p className="text-red-600 text-xs">{error}</p>}
           <button type="submit" disabled={loading}
-            className="w-full bg-indigo-600 text-white py-2.5 rounded-xl font-semibold hover:bg-indigo-700 disabled:opacity-50">
+            className="w-full bg-[#1a2e52] text-white py-2.5 rounded font-semibold hover:bg-[#0f1d36] disabled:opacity-50 transition-colors text-sm">
             {loading ? '登録中...' : '登録する'}
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-500 mt-4">
+        <p className="text-center text-xs text-[#94a3b8] mt-5">
           すでにアカウントをお持ちの方は{' '}
-          <a href="/login" className="text-indigo-600 hover:underline">ログイン</a>
+          <a href="/login" className="text-[#3d5a9c] hover:underline">ログイン</a>
         </p>
       </div>
     </div>

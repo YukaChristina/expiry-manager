@@ -66,11 +66,11 @@ export default function HomePage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-800">一覧</h2>
-        <div className="flex gap-2 text-sm">
-          <span className="text-gray-400">{items.length}件</span>
-          <button onClick={() => handleExport('ics')} className="text-gray-500 hover:text-indigo-600">📅 .ics</button>
-          <button onClick={() => handleExport('csv')} className="text-gray-500 hover:text-indigo-600">📄 CSV</button>
+        <h2 className="text-xl font-bold text-white tracking-wide">蔵の中身</h2>
+        <div className="flex gap-2 text-sm items-center">
+          <span className="text-white/50 text-xs">{items.length}件</span>
+          <button onClick={() => handleExport('ics')} className="text-white/60 hover:text-white text-xs transition-colors">📅 .ics</button>
+          <button onClick={() => handleExport('csv')} className="text-white/60 hover:text-white text-xs transition-colors">📄 CSV</button>
         </div>
       </div>
 
@@ -83,17 +83,17 @@ export default function HomePage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="食品名で検索..."
-          className="border border-gray-300 rounded-lg px-3 py-2 text-sm flex-1 min-w-40 bg-white"
+          className="border border-[#c8d4e8] rounded px-3 py-2 text-sm flex-1 min-w-40 bg-white focus:outline-none focus:border-[#3d5a9c]"
         />
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {CATEGORIES.map((c) => (
             <button
               key={c.value}
               onClick={() => setCategory(c.value)}
-              className={`px-3 py-2 rounded-lg text-sm border transition-colors ${
+              className={`px-3 py-2 rounded text-sm border transition-colors ${
                 category === c.value
-                  ? 'bg-indigo-500 text-white border-indigo-500'
-                  : 'bg-white text-gray-600 border-gray-300 hover:border-indigo-300'
+                  ? 'bg-[#1a2e52] text-white border-[#1a2e52]'
+                  : 'bg-white text-[#64748b] border-[#c8d4e8] hover:border-[#3d5a9c]'
               }`}
             >
               {c.label}
@@ -103,7 +103,7 @@ export default function HomePage() {
       </div>
 
       {loading ? (
-        <div className="text-center py-16 text-gray-400">読み込み中...</div>
+        <div className="text-center py-16 text-white/50 text-sm">読み込み中...</div>
       ) : (
         <ItemTable items={items} onDelete={handleDelete} onUpdate={handleUpdate} />
       )}

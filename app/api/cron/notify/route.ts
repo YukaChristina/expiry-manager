@@ -11,6 +11,7 @@ export async function GET() {
     .from('items')
     .select('*')
     .is('notified_at', null)
+    .eq('send_email', true)
     .gte('expiry_date', today.toISOString().slice(0, 10))
 
   if (!items?.length) return NextResponse.json({ sent: 0 })
@@ -28,7 +29,7 @@ export async function GET() {
     if (!email) continue
 
     await resend.emails.send({
-      from: 'Expiry Manager <onboarding@resend.dev>',
+      from: 'Expiry Manager <noreply@yuka-studio.net>',
       to: email,
       subject: `【期限注意】${item.name} があと${daysLeft}日で期限切れです`,
       html: `
