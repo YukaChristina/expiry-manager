@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     .gte('expiry_date', todayStr)
 
   if (error) return NextResponse.json({ error: error.message, allItems, allError }, { status: 500 })
-  if (!items?.length) return NextResponse.json({ sent: 0, debug: 'no items matched query', today: todayStr, allItems })
+  if (!items?.length) return NextResponse.json({ sent: 0, debug: 'no items matched query', today: todayStr, allItems, totalInDb: allItems?.length ?? 0 })
 
   const debug: object[] = []
   let sent = 0
@@ -84,5 +84,5 @@ export async function GET(request: Request) {
     sent++
   }
 
-  return NextResponse.json({ sent, debug })
+  return NextResponse.json({ sent, debug, allItems, totalInDb: allItems?.length ?? 0 })
 }
