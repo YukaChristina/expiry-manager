@@ -50,9 +50,13 @@ export default function RegisterFlow() {
     barcode: '',
   })
 
-  const handleBarcodeDetected = async (code: string, detectedName?: string) => {
+  const handleBarcodeDetected = async (code: string, detectedName?: string, detectedExpiry?: string) => {
     setShowScanner(false)
     setForm((f) => ({ ...f, barcode: code }))
+
+    if (detectedExpiry) {
+      setForm((f) => ({ ...f, expiry_date: detectedExpiry }))
+    }
 
     // Claude Vision が商品名まで返した場合はそのまま使う
     if (detectedName) {

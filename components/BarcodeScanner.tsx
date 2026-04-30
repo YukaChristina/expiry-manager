@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 
 type Props = {
-  onDetected: (code: string, name?: string) => void
+  onDetected: (code: string, name?: string, expiryDate?: string) => void
   onClose: () => void
 }
 
@@ -45,10 +45,10 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
       const formData = new FormData()
       formData.append('image', file)
       const res = await fetch('/api/scan/barcode-image', { method: 'POST', body: formData })
-      const data = await res.json() as { barcode: string | null; name: string | null }
+      const data = await res.json() as { barcode: string | null; name: string | null; expiry_date: string | null }
 
       if (data.barcode || data.name) {
-        onDetected(data.barcode ?? '', data.name ?? undefined)
+        onDetected(data.barcode ?? '', data.name ?? undefined, data.expiry_date ?? undefined)
       } else {
         setError('読み取れませんでした。バーコードと商品名が映るように撮り直してください。')
       }

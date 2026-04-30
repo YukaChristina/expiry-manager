@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
 
   const response = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 200,
+    max_tokens: 300,
     messages: [{
       role: 'user',
       content: [
@@ -25,11 +25,13 @@ export async function POST(req: NextRequest) {
         {
           type: 'text',
           text: `この商品画像から以下を読み取り、必ずJSONのみで返してください（マークダウン不要）:
-{"barcode":"バーコード番号の数字のみ、なければnull","name":"商品名（日本語）、なければnull"}
+{"barcode":"バーコード番号の数字のみ、なければnull","name":"商品名（日本語）、なければnull","expiry_date":"消費期限または賞味期限をYYYY-MM-DD形式で、なければnull"}
 
-例: {"barcode":"4901234567890","name":"キッコーマン丸大豆しょうゆ500ml"}
-バーコードが読めない場合: {"barcode":null,"name":"醤油"}
-何も分からない場合: {"barcode":null,"name":null}`,
+消費期限の注意:
+- 「年月日」「賞味期限」「消費期限」「best before」などの近くにある日付を探す
+- 年月のみ（日なし）の場合はその月末日を使う（例: 2026年5月→2026-05-31）
+- 例: {"barcode":"4901234567890","name":"キッコーマン醤油","expiry_date":"2026-05-31"}
+- 日付が読めない場合: {"barcode":"4901234567890","name":"醤油","expiry_date":null}`,
         },
       ],
     }],
@@ -38,9 +40,8 @@ export async function POST(req: NextRequest) {
   const raw = (response.content[0] as { type: string; text: string }).text.trim()
 
   try {
-    // マークダウンコードブロックを除去してパース
     const jsonStr = raw.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '').trim()
-    const parsed = JSON.parse(jsonStr) as { barcode: string | null; name: string | null }
+    const parsed = JSON.parse(jsonStr) as { barcode: string | null; name: string | null; expiry_date: string | null }
 
     const barcode = typeof parsed.barcode === 'string' && /^\d{7,14}$/.test(parsed.barcode)
       ? parsed.barcode
@@ -48,9 +49,12 @@ export async function POST(req: NextRequest) {
     const name = typeof parsed.name === 'string' && parsed.name.length > 0
       ? parsed.name
       : null
+    const expiry_date = typeof parsed.expiry_date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(parsed.expiry_date)
+      ? parsed.expiry_date
+      : null
 
-    return NextResponse.json({ barcode, name })
+    return NextResponse.json({ barcode, name, expiry_date })
   } catch {
-    return NextResponse.json({ barcode: null, name: null })
+    return NextResponse.json({ barcode: null, name: null, expiry_date: null })
   }
 }
