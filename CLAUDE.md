@@ -13,7 +13,7 @@
 
 ## リポジトリ・デプロイ
 - GitHub: https://github.com/YukaChristina/expiry-manager
-- Vercel: https://expiry-manager-olive.vercel.app
+- Vercel: https://expiry-manager.yuka-studio.net
 
 ## Vercelデプロイ手順
 VercelのProduction Branchが `master` に設定されているため、以下の2行が必要：
@@ -29,7 +29,7 @@ git push origin main:master
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `ANTHROPIC_API_KEY`
 - `RESEND_API_KEY`
-- `NEXT_PUBLIC_APP_URL` = https://expiry-manager-olive.vercel.app
+- `NEXT_PUBLIC_APP_URL` = https://expiry-manager.yuka-studio.net
 - `NEXT_PUBLIC_DEMO_EMAIL` = demo@expiry-manager.com
 - `NEXT_PUBLIC_DEMO_PASSWORD` = Demo1234!
 - `RAKUTEN_APP_ID`
