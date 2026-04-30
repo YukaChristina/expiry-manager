@@ -25,24 +25,29 @@ export async function GET(request: Request) {
     .gte('expiry_date', todayStr)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  if (!items?.length) return NextResponse.json({ sent: 0 })
+  if (!items?.length) return NextResponse.json({ sent: 0, debug: 'no items matched query', today: todayStr })
 
+  const debug: object[] = []
   let sent = 0
   for (const item of items) {
     const expiry = new Date(item.expiry_date)
     const daysLeft = Math.round((expiry.getTime() - today.getTime()) / 86400000)
 
-    // 通知タイミング未到達ならスキップ（Cronが1日ズレても確実に送る）
-    if (daysLeft > item.notify_days) continue
+    if (daysLeft > item.notify_days) {
+      debug.push({ item: item.name, skipped: 'not yet', daysLeft, notify_days: item.notify_days })
+      continue
+    }
 
-    // user_id からメールアドレスを取得
     const { data: userData } = await supabaseServer.auth.admin.getUserById(item.user_id)
     const email = userData?.user?.email
-    if (!email) continue
+    if (!email) {
+      debug.push({ item: item.name, skipped: 'no email', user_id: item.user_id })
+      continue
+    }
 
     const daysLabel = daysLeft === 0 ? '本日' : `あと${daysLeft}日`
 
-    await resend.emails.send({
+    const { error: sendError } = await resend.emails.send({
       from: 'Expiry Manager <noreply@expiry-manager.yuka-studio.net>',
       to: email,
       subject: `【期限注意】${item.name} の消費期限は${daysLabel}です`,
@@ -60,13 +65,19 @@ export async function GET(request: Request) {
       `,
     })
 
+    if (sendError) {
+      debug.push({ item: item.name, sendError })
+      continue
+    }
+
     await supabaseServer
       .from('items')
       .update({ notified_at: new Date().toISOString() })
       .eq('id', item.id)
 
+    debug.push({ item: item.name, sent: true, to: email, daysLeft })
     sent++
   }
 
-  return NextResponse.json({ sent })
+  return NextResponse.json({ sent, debug })
 }
