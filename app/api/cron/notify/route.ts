@@ -5,10 +5,13 @@ import { Resend } from 'resend'
 const resend = new Resend(process.env.RESEND_API_KEY!)
 
 export async function GET(request: Request) {
-  // Vercel Cron 認証チェック
-  const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // Vercel Cron 認証チェック（CRON_SECRETが設定されている場合のみ）
+  const secret = process.env.CRON_SECRET
+  if (secret) {
+    const authHeader = request.headers.get('authorization')
+    if (authHeader !== `Bearer ${secret}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
   }
 
   const today = new Date()
