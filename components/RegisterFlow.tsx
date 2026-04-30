@@ -50,11 +50,19 @@ export default function RegisterFlow() {
     barcode: '',
   })
 
-  const handleBarcodeDetected = async (code: string) => {
+  const handleBarcodeDetected = async (code: string, detectedName?: string) => {
     setShowScanner(false)
-    setScanning(true)
     setForm((f) => ({ ...f, barcode: code }))
 
+    // Claude Vision が商品名まで返した場合はそのまま使う
+    if (detectedName) {
+      setForm((f) => ({ ...f, name: detectedName }))
+      return
+    }
+
+    // バーコード番号だけの場合は外部APIで商品名を検索
+    if (!code) return
+    setScanning(true)
     try {
       const res = await fetch(`/api/scan/barcode?code=${code}`)
       const data = await res.json()

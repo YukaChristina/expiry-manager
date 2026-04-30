@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react'
 
 type Props = {
-  onDetected: (code: string) => void
+  onDetected: (code: string, name?: string) => void
   onClose: () => void
 }
 
@@ -40,16 +40,17 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
       } catch {}
     }
 
-    // iOS / フォールバック: Claude Vision でバーコードを読み取る
+    // iOS / フォールバック: Claude Vision でバーコード＋商品名を読み取る
     try {
       const formData = new FormData()
       formData.append('image', file)
       const res = await fetch('/api/scan/barcode-image', { method: 'POST', body: formData })
-      const data = await res.json()
-      if (data.barcode) {
-        onDetected(data.barcode)
+      const data = await res.json() as { barcode: string | null; name: string | null }
+
+      if (data.barcode || data.name) {
+        onDetected(data.barcode ?? '', data.name ?? undefined)
       } else {
-        setError('バーコードを検出できませんでした。バーコード部分を大きく撮影し直してください。')
+        setError('読み取れませんでした。バーコードと商品名が映るように撮り直してください。')
       }
     } catch {
       setError('エラーが発生しました。もう一度試してください。')
@@ -69,7 +70,7 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl w-full max-w-sm">
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
-          <h3 className="font-bold text-gray-800">バーコードを撮影</h3>
+          <h3 className="font-bold text-gray-800">商品を撮影</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
         </div>
 
@@ -79,12 +80,12 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
           ) : (
             <div className="aspect-video bg-gray-50 rounded-xl flex flex-col items-center justify-center text-gray-400 gap-2">
               <span className="text-4xl">📷</span>
-              <p className="text-sm text-center">バーコード部分が<br/>はっきり映るように撮影</p>
+              <p className="text-sm text-center px-4">バーコードと商品名が<br/>映るように撮影してください</p>
             </div>
           )}
 
           {loading && (
-            <p className="text-center text-sm text-indigo-600 animate-pulse">バーコードを読み取り中...</p>
+            <p className="text-center text-sm text-indigo-600 animate-pulse">商品情報を読み取り中...</p>
           )}
           {error && (
             <p className="text-center text-sm text-red-500">{error}</p>

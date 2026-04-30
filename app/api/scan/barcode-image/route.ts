@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
 
   const response = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 50,
+    max_tokens: 200,
     messages: [{
       role: 'user',
       content: [
@@ -24,17 +24,33 @@ export async function POST(req: NextRequest) {
         },
         {
           type: 'text',
-          text: 'この画像に写っているバーコード（JANコード・EAN-13・UPCなど）の数字を読み取り、数字のみを返してください。バーコードが見つからない場合は "NOT_FOUND" とだけ返してください。余計な説明は不要です。',
+          text: `この商品画像から以下を読み取り、必ずJSONのみで返してください（マークダウン不要）:
+{"barcode":"バーコード番号の数字のみ、なければnull","name":"商品名（日本語）、なければnull"}
+
+例: {"barcode":"4901234567890","name":"キッコーマン丸大豆しょうゆ500ml"}
+バーコードが読めない場合: {"barcode":null,"name":"醤油"}
+何も分からない場合: {"barcode":null,"name":null}`,
         },
       ],
     }],
   })
 
-  const text = (response.content[0] as { type: string; text: string }).text.trim().replace(/\s/g, '')
+  const raw = (response.content[0] as { type: string; text: string }).text.trim()
 
-  if (text === 'NOT_FOUND' || !/^\d{7,14}$/.test(text)) {
-    return NextResponse.json({ barcode: null })
+  try {
+    // マークダウンコードブロックを除去してパース
+    const jsonStr = raw.replace(/^```[a-z]*\n?/i, '').replace(/\n?```$/i, '').trim()
+    const parsed = JSON.parse(jsonStr) as { barcode: string | null; name: string | null }
+
+    const barcode = typeof parsed.barcode === 'string' && /^\d{7,14}$/.test(parsed.barcode)
+      ? parsed.barcode
+      : null
+    const name = typeof parsed.name === 'string' && parsed.name.length > 0
+      ? parsed.name
+      : null
+
+    return NextResponse.json({ barcode, name })
+  } catch {
+    return NextResponse.json({ barcode: null, name: null })
   }
-
-  return NextResponse.json({ barcode: text })
 }
