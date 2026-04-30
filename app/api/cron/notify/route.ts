@@ -17,6 +17,11 @@ export async function GET(request: Request) {
   const today = new Date()
   const todayStr = today.toISOString().slice(0, 10)
 
+  const { data: allItems, error: allError } = await supabaseServer
+    .from('items')
+    .select('id, name, expiry_date, send_email, notified_at, notify_days')
+    .order('expiry_date', { ascending: true })
+
   const { data: items, error } = await supabaseServer
     .from('items')
     .select('*')
@@ -24,8 +29,8 @@ export async function GET(request: Request) {
     .eq('send_email', true)
     .gte('expiry_date', todayStr)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  if (!items?.length) return NextResponse.json({ sent: 0, debug: 'no items matched query', today: todayStr })
+  if (error) return NextResponse.json({ error: error.message, allItems, allError }, { status: 500 })
+  if (!items?.length) return NextResponse.json({ sent: 0, debug: 'no items matched query', today: todayStr, allItems })
 
   const debug: object[] = []
   let sent = 0
