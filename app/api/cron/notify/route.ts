@@ -4,16 +4,24 @@ import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY!)
 
-export async function GET() {
-  const today = new Date()
+export async function GET(request: Request) {
+  // Vercel Cron 認証チェック
+  const authHeader = request.headers.get('authorization')
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
-  const { data: items } = await supabaseServer
+  const today = new Date()
+  const todayStr = today.toISOString().slice(0, 10)
+
+  const { data: items, error } = await supabaseServer
     .from('items')
     .select('*')
     .is('notified_at', null)
     .eq('send_email', true)
-    .gte('expiry_date', today.toISOString().slice(0, 10))
+    .gte('expiry_date', todayStr)
 
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   if (!items?.length) return NextResponse.json({ sent: 0 })
 
   let sent = 0
@@ -21,22 +29,32 @@ export async function GET() {
     const expiry = new Date(item.expiry_date)
     const daysLeft = Math.round((expiry.getTime() - today.getTime()) / 86400000)
 
-    if (daysLeft !== item.notify_days) continue
+    // 通知タイミング未到達ならスキップ（Cronが1日ズレても確実に送る）
+    if (daysLeft > item.notify_days) continue
 
-    // user_idからメールアドレスを取得
+    // user_id からメールアドレスを取得
     const { data: userData } = await supabaseServer.auth.admin.getUserById(item.user_id)
     const email = userData?.user?.email
     if (!email) continue
 
+    const daysLabel = daysLeft === 0 ? '本日' : `あと${daysLeft}日`
+
     await resend.emails.send({
-      from: 'Expiry Manager <noreply@yuka-studio.net>',
+      from: 'Expiry Manager <noreply@expiry-manager.yuka-studio.net>',
       to: email,
-      subject: `【期限注意】${item.name} があと${daysLeft}日で期限切れです`,
+      subject: `【期限注意】${item.name} の消費期限は${daysLabel}です`,
       html: `
-        <p>${item.name} の消費期限まであと <strong>${daysLeft}日</strong> です。</p>
-        <p>保存場所: ${item.location || '未設定'} / 数量: ${item.quantity}個</p>
-        <p><a href="${process.env.NEXT_PUBLIC_APP_URL}">アプリで確認する</a></p>
-      `
+        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
+          <h2 style="color:#e67e22">⚠️ 消費期限のお知らせ</h2>
+          <p><strong>${item.name}</strong> の消費期限が近づいています。</p>
+          <table style="border-collapse:collapse;width:100%;margin:16px 0">
+            <tr><td style="padding:8px;color:#666">期限</td><td style="padding:8px"><strong>${item.expiry_date}</strong>（${daysLabel}）</td></tr>
+            <tr style="background:#f9f9f9"><td style="padding:8px;color:#666">保存場所</td><td style="padding:8px">${item.location || '未設定'}</td></tr>
+            <tr><td style="padding:8px;color:#666">数量</td><td style="padding:8px">${item.quantity}個</td></tr>
+          </table>
+          <a href="${process.env.NEXT_PUBLIC_APP_URL}" style="display:inline-block;background:#e67e22;color:white;padding:12px 24px;border-radius:6px;text-decoration:none">アプリで確認する</a>
+        </div>
+      `,
     })
 
     await supabaseServer

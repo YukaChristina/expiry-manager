@@ -39,6 +39,7 @@ git push origin main:master
 - user_id外部キー制約: 有効（`items_user_id_fkey`）
 - Email確認: **オフ**（Confirm email を無効化済み）
 - デモアカウント: demo@expiry-manager.com / Demo1234!
+- `send_email` カラム追加済み（2026-04-12）: `ALTER TABLE items ADD COLUMN send_email boolean NOT NULL DEFAULT true`
 
 ## 実装済み機能
 - ログイン（デモボタン＋通常ログイン）
@@ -55,6 +56,13 @@ git push origin main:master
 - Vercel Cron（毎朝8時に通知APIを呼ぶ）
 
 ## 未完・TODO
-- メール実送信: Resendで独自ドメインを設定すれば有効化できる
-- `send_email` フラグはDBに保存されているが、cronでの送信判定に使われていない（要実装）
 - デバッグ表示（RegisterFlowのdebugInfo）は残っているが実害なし
+
+## メール通知（実装済み・2026-04-29）
+- Resendドメイン検証済み: `expiry-manager.yuka-studio.net`
+- from: `noreply@expiry-manager.yuka-studio.net`
+- Cron: 毎日15:00 JST（UTC 06:00）に `/api/cron/notify` を呼び出し
+- `send_email = true` かつ `notified_at IS NULL` のアイテムを対象
+- `daysLeft <= notify_days` になった時点で送信（Cronズレに強い設計）
+- 送信後に `notified_at` をセットして重複送信を防ぐ
+- CRON_SECRET による認証チェック済み
