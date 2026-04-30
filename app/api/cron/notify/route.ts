@@ -59,7 +59,7 @@ export async function GET(request: Request) {
     const daysLabel = daysLeft === 0 ? '本日' : `あと${daysLeft}日`
 
     const { data: sendData, error: sendError } = await resend.emails.send({
-      from: 'Expiry Manager <noreply@expiry-manager.yuka-studio.net>',
+      from: 'Expiry Manager <noreply@yuka-studio.net>',
       to: email,
       subject: `【期限注意】${item.name} の消費期限は${daysLabel}です`,
       html: `
