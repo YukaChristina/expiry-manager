@@ -77,7 +77,7 @@ export async function GET(request: Request) {
     })
 
     if (sendError) {
-      debug.push({ item: item.name, sendError: String(sendError) })
+      debug.push({ item: item.name, sendError: { name: (sendError as {name?:string}).name, message: (sendError as {message?:string}).message, statusCode: (sendError as {statusCode?:number}).statusCode } })
       continue
     }
 
