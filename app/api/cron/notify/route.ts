@@ -14,6 +14,12 @@ export async function GET(request: Request) {
     }
   }
 
+  const url = new URL(request.url)
+  const reset = url.searchParams.get('reset') === 'true'
+  if (reset) {
+    await supabaseServer.from('items').update({ notified_at: null }).not('notified_at', 'is', null)
+  }
+
   const today = new Date()
   const todayStr = today.toISOString().slice(0, 10)
 
@@ -52,7 +58,7 @@ export async function GET(request: Request) {
 
     const daysLabel = daysLeft === 0 ? '本日' : `あと${daysLeft}日`
 
-    const { error: sendError } = await resend.emails.send({
+    const { data: sendData, error: sendError } = await resend.emails.send({
       from: 'Expiry Manager <noreply@expiry-manager.yuka-studio.net>',
       to: email,
       subject: `【期限注意】${item.name} の消費期限は${daysLabel}です`,
@@ -71,7 +77,7 @@ export async function GET(request: Request) {
     })
 
     if (sendError) {
-      debug.push({ item: item.name, sendError })
+      debug.push({ item: item.name, sendError: String(sendError) })
       continue
     }
 
@@ -80,7 +86,7 @@ export async function GET(request: Request) {
       .update({ notified_at: new Date().toISOString() })
       .eq('id', item.id)
 
-    debug.push({ item: item.name, sent: true, to: email, daysLeft })
+    debug.push({ item: item.name, sent: true, to: email, daysLeft, resendId: sendData?.id })
     sent++
   }
 
