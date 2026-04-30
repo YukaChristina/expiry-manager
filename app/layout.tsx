@@ -14,7 +14,15 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "蔵出し管理帳",
-  description: "食品・備蓄品の蔵出し管理アプリ",
+  description: "食品・備蓄品の消費期限管理アプリ",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: '蔵出し管理帳',
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
 };
 
 export default function RootLayout({
