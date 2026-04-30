@@ -59,8 +59,8 @@ git push origin main:master
 - デバッグ表示（RegisterFlowのdebugInfo）は残っているが実害なし
 
 ## メール通知（実装済み・2026-04-29）
-- Resendドメイン検証済み: `expiry-manager.yuka-studio.net`
-- from: `noreply@expiry-manager.yuka-studio.net`
+- Resendドメイン検証済み: `yuka-studio.net`
+- from: `noreply@yuka-studio.net`
 - Cron: 毎日15:00 JST（UTC 06:00）に `/api/cron/notify` を呼び出し
 - `send_email = true` かつ `notified_at IS NULL` のアイテムを対象
 - `daysLeft <= notify_days` になった時点で送信（Cronズレに強い設計）

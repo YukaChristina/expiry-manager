@@ -14,19 +14,8 @@ export async function GET(request: Request) {
     }
   }
 
-  const url = new URL(request.url)
-  const reset = url.searchParams.get('reset') === 'true'
-  if (reset) {
-    await supabaseServer.from('items').update({ notified_at: null }).not('notified_at', 'is', null)
-  }
-
   const today = new Date()
   const todayStr = today.toISOString().slice(0, 10)
-
-  const { data: allItems, error: allError } = await supabaseServer
-    .from('items')
-    .select('id, name, expiry_date, send_email, notified_at, notify_days')
-    .order('expiry_date', { ascending: true })
 
   const { data: items, error } = await supabaseServer
     .from('items')
@@ -35,30 +24,23 @@ export async function GET(request: Request) {
     .eq('send_email', true)
     .gte('expiry_date', todayStr)
 
-  if (error) return NextResponse.json({ error: error.message, allItems, allError }, { status: 500 })
-  if (!items?.length) return NextResponse.json({ sent: 0, debug: 'no items matched query', today: todayStr, allItems, totalInDb: allItems?.length ?? 0 })
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (!items?.length) return NextResponse.json({ sent: 0 })
 
-  const debug: object[] = []
   let sent = 0
   for (const item of items) {
     const expiry = new Date(item.expiry_date)
     const daysLeft = Math.round((expiry.getTime() - today.getTime()) / 86400000)
 
-    if (daysLeft > item.notify_days) {
-      debug.push({ item: item.name, skipped: 'not yet', daysLeft, notify_days: item.notify_days })
-      continue
-    }
+    if (daysLeft > item.notify_days) continue
 
     const { data: userData } = await supabaseServer.auth.admin.getUserById(item.user_id)
     const email = userData?.user?.email
-    if (!email) {
-      debug.push({ item: item.name, skipped: 'no email', user_id: item.user_id })
-      continue
-    }
+    if (!email) continue
 
     const daysLabel = daysLeft === 0 ? '本日' : `あと${daysLeft}日`
 
-    const { data: sendData, error: sendError } = await resend.emails.send({
+    const { error: sendError } = await resend.emails.send({
       from: 'Expiry Manager <noreply@yuka-studio.net>',
       to: email,
       subject: `【期限注意】${item.name} の消費期限は${daysLabel}です`,
@@ -76,19 +58,15 @@ export async function GET(request: Request) {
       `,
     })
 
-    if (sendError) {
-      debug.push({ item: item.name, sendError: { name: (sendError as {name?:string}).name, message: (sendError as {message?:string}).message, statusCode: (sendError as {statusCode?:number}).statusCode } })
-      continue
-    }
+    if (sendError) continue
 
     await supabaseServer
       .from('items')
       .update({ notified_at: new Date().toISOString() })
       .eq('id', item.id)
 
-    debug.push({ item: item.name, sent: true, to: email, daysLeft, resendId: sendData?.id })
     sent++
   }
 
-  return NextResponse.json({ sent, debug, allItems, totalInDb: allItems?.length ?? 0 })
+  return NextResponse.json({ sent })
 }
