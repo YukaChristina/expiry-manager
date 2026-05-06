@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
-import BarcodeScanner from './BarcodeScanner'
 import ExpiryInput from './ExpiryInput'
 
 type Step = 1 | 2 | 3
@@ -20,24 +19,19 @@ type FormData = {
   barcode: string
 }
 
-const STEPS = ['スキャン', '情報入力', '確認']
+const STEPS = ['撮影', '情報入力', '確認']
 const NOTIFY_OPTIONS = [3, 7, 14, 30]
 
 export default function RegisterFlow() {
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
   const [userEmail, setUserEmail] = useState('')
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUserEmail(session?.user?.email ?? '')
-    })
-  }, [])
-  const [showScanner, setShowScanner] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [preview, setPreview] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
+  const [captureError, setCaptureError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
-  const [debugInfo, setDebugInfo] = useState('')
   const [form, setForm] = useState<FormData>({
     name: '',
     category: 'other',
@@ -50,35 +44,70 @@ export default function RegisterFlow() {
     barcode: '',
   })
 
-  const handleBarcodeDetected = async (code: string, detectedName?: string, detectedExpiry?: string) => {
-    setShowScanner(false)
-    setForm((f) => ({ ...f, barcode: code }))
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUserEmail(session?.user?.email ?? '')
+    })
+  }, [])
 
-    if (detectedExpiry) {
-      setForm((f) => ({ ...f, expiry_date: detectedExpiry }))
-    }
+  const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
 
-    // Claude Vision が商品名まで返した場合はそのまま使う
-    if (detectedName) {
-      setForm((f) => ({ ...f, name: detectedName }))
-      return
-    }
-
-    // バーコード番号だけの場合は外部APIで商品名を検索
-    if (!code) return
+    const previewUrl = URL.createObjectURL(file)
+    setPreview(previewUrl)
     setScanning(true)
+    setCaptureError('')
+
+    // Chrome/Android: ネイティブ BarcodeDetector（高速・無料）
+    if ('BarcodeDetector' in window) {
+      try {
+        const detector = new (window as { BarcodeDetector: new (opts: object) => { detect: (img: HTMLImageElement) => Promise<Array<{ rawValue: string }>> } }).BarcodeDetector({
+          formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'],
+        })
+        const img = new Image()
+        img.src = previewUrl
+        await new Promise<void>((r) => { img.onload = () => r() })
+        const barcodes = await detector.detect(img)
+        if (barcodes.length > 0) {
+          const code = barcodes[0].rawValue
+          setForm((f) => ({ ...f, barcode: code }))
+          setScanning(false)
+          // バーコードのみの場合は外部APIで商品名を検索
+          const res = await fetch(`/api/scan/barcode?code=${code}`)
+          const data = await res.json()
+          if (data.found && data.name) setForm((f) => ({ ...f, name: data.name }))
+          return
+        }
+      } catch {}
+    }
+
+    // iOS/フォールバック: Claude Vision でバーコード＋商品名＋賞味期限を読み取る
     try {
-      const res = await fetch(`/api/scan/barcode?code=${code}`)
-      const data = await res.json()
-      setDebugInfo(`コード: ${code}\nレスポンス: ${JSON.stringify(data, null, 2)}`)
-      if (data.found && data.name) {
-        setForm((f) => ({ ...f, name: data.name }))
+      const formData = new FormData()
+      formData.append('image', file)
+      const res = await fetch('/api/scan/barcode-image', { method: 'POST', body: formData })
+      const data = await res.json() as { barcode: string | null; name: string | null; expiry_date: string | null }
+
+      if (data.barcode) setForm((f) => ({ ...f, barcode: data.barcode! }))
+      if (data.name) setForm((f) => ({ ...f, name: data.name! }))
+      if (data.expiry_date) setForm((f) => ({ ...f, expiry_date: data.expiry_date! }))
+
+      if (!data.barcode && !data.name) {
+        setCaptureError('読み取れませんでした。商品名と賞味期限が映るように撮り直してください。')
       }
-    } catch (err) {
-      setDebugInfo(`コード: ${code}\nエラー: ${String(err)}`)
+    } catch {
+      setCaptureError('エラーが発生しました。もう一度試してください。')
     } finally {
       setScanning(false)
     }
+  }
+
+  const handleRetry = () => {
+    setPreview(null)
+    setCaptureError('')
+    setForm((f) => ({ ...f, name: '', barcode: '', expiry_date: '' }))
+    if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
   const handleSubmit = async () => {
@@ -133,33 +162,52 @@ export default function RegisterFlow() {
       {step === 1 && (
         <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
           <h2 className="font-bold text-lg text-gray-800">商品を撮影する</h2>
-          <button
-            onClick={() => setShowScanner(true)}
-            className="w-full border-2 border-purple-600 bg-white rounded-xl p-8 text-center text-purple-700 hover:bg-purple-50 transition-colors"
-          >
-            <p className="text-3xl mb-2">📷</p>
-            <p className="font-medium">商品を撮影する</p>
-            <p className="text-sm mt-1 text-purple-500">商品名と賞味期限が両方映ると入力が簡単になります</p>
-          </button>
-          {scanning && <p className="text-center text-sm text-indigo-600">商品情報を取得中...</p>}
+
+          <input
+            ref={fileInputRef}
+            id="camera-capture"
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="hidden"
+            onChange={handleCapture}
+          />
+
+          {preview ? (
+            <img src={preview} alt="撮影した商品" className="w-full rounded-xl object-contain max-h-56 bg-gray-50" />
+          ) : (
+            <label
+              htmlFor="camera-capture"
+              className="w-full border-2 border-purple-600 bg-white rounded-xl p-8 text-center text-purple-700 hover:bg-purple-50 transition-colors cursor-pointer flex flex-col items-center"
+            >
+              <p className="text-3xl mb-2">📷</p>
+              <p className="font-medium">商品を撮影する</p>
+              <p className="text-sm mt-1 text-purple-500">商品名と賞味期限が両方映ると入力が簡単になります</p>
+            </label>
+          )}
+
+          {scanning && <p className="text-center text-sm text-indigo-600 animate-pulse">商品情報を読み取り中...</p>}
+
+          {captureError && (
+            <p className="text-center text-sm text-red-500">{captureError}</p>
+          )}
+
+          {preview && !scanning && (
+            <label
+              htmlFor="camera-capture"
+              onClick={handleRetry}
+              className="w-full border-2 border-purple-600 bg-white rounded-xl py-3 text-center text-purple-700 hover:bg-purple-50 transition-colors cursor-pointer block font-medium text-sm"
+            >
+              📷 撮り直す
+            </label>
+          )}
+
           {form.name && (
             <div className="bg-green-50 rounded-lg p-3 text-sm text-green-700">
               ✓ 「{form.name}」が見つかりました
             </div>
           )}
-          {debugInfo && !form.name && (
-            <div className="bg-yellow-50 rounded-lg p-4 space-y-2">
-              <p className="text-sm text-yellow-800 font-medium">商品が見つかりませんでした</p>
-              <p className="text-xs text-yellow-600">商品名を直接入力してください</p>
-              <input
-                type="text"
-                placeholder="例: 谷川連峰の天然水"
-                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                className="w-full border border-yellow-300 rounded-lg px-3 py-2 text-sm bg-white"
-                autoFocus
-              />
-            </div>
-          )}
+
           {form.name && (
             <button
               onClick={() => setStep(2)}
@@ -168,6 +216,7 @@ export default function RegisterFlow() {
               次へ進む
             </button>
           )}
+
           <button
             onClick={() => setStep(2)}
             className="w-full border border-dashed border-gray-300 bg-white text-gray-400 py-3 rounded-xl text-sm hover:bg-gray-50 transition-colors"
@@ -321,13 +370,6 @@ export default function RegisterFlow() {
             </button>
           </div>
         </div>
-      )}
-
-      {showScanner && (
-        <BarcodeScanner
-          onDetected={handleBarcodeDetected}
-          onClose={() => setShowScanner(false)}
-        />
       )}
     </div>
   )
