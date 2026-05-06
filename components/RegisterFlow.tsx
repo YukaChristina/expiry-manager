@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import ExpiryInput from './ExpiryInput'
@@ -27,6 +27,9 @@ export default function RegisterFlow() {
   const [step, setStep] = useState<Step>(1)
   const [userEmail, setUserEmail] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const [cameraActive, setCameraActive] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
   const [captureError, setCaptureError] = useState('')
@@ -50,10 +53,61 @@ export default function RegisterFlow() {
     })
   }, [])
 
-  const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+  // カメラストリームをvideo要素にセット
+  useEffect(() => {
+    if (cameraActive && videoRef.current && streamRef.current) {
+      videoRef.current.srcObject = streamRef.current
+      videoRef.current.play().catch(() => {})
+    }
+  }, [cameraActive])
 
+  // アンマウント時にカメラを停止
+  useEffect(() => {
+    return () => { streamRef.current?.getTracks().forEach(t => t.stop()) }
+  }, [])
+
+  const closeCamera = useCallback(() => {
+    streamRef.current?.getTracks().forEach(t => t.stop())
+    streamRef.current = null
+    setCameraActive(false)
+  }, [])
+
+  const openCamera = async () => {
+    setCaptureError('')
+    if (!navigator.mediaDevices?.getUserMedia) {
+      // getUserMedia非対応の場合はファイル入力にフォールバック
+      fileInputRef.current?.click()
+      return
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false,
+      })
+      streamRef.current = stream
+      setCameraActive(true)
+    } catch {
+      // 権限拒否等の場合はファイル入力にフォールバック
+      fileInputRef.current?.click()
+    }
+  }
+
+  const takePhoto = () => {
+    const video = videoRef.current
+    if (!video) return
+    const canvas = document.createElement('canvas')
+    canvas.width = video.videoWidth
+    canvas.height = video.videoHeight
+    canvas.getContext('2d')?.drawImage(video, 0, 0)
+    closeCamera()
+    canvas.toBlob(async (blob) => {
+      if (!blob) return
+      const file = new File([blob], 'photo.jpg', { type: 'image/jpeg' })
+      await processCapture(file)
+    }, 'image/jpeg', 0.85)
+  }
+
+  const processCapture = async (file: File) => {
     const previewUrl = URL.createObjectURL(file)
     setPreview(previewUrl)
     setScanning(true)
@@ -73,7 +127,6 @@ export default function RegisterFlow() {
           const code = barcodes[0].rawValue
           setForm((f) => ({ ...f, barcode: code }))
           setScanning(false)
-          // バーコードのみの場合は外部APIで商品名を検索
           const res = await fetch(`/api/scan/barcode?code=${code}`)
           const data = await res.json()
           if (data.found && data.name) setForm((f) => ({ ...f, name: data.name }))
@@ -103,11 +156,18 @@ export default function RegisterFlow() {
     }
   }
 
+  const handleFileCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    await processCapture(file)
+  }
+
   const handleRetry = () => {
     setPreview(null)
     setCaptureError('')
     setForm((f) => ({ ...f, name: '', barcode: '', expiry_date: '' }))
     if (fileInputRef.current) fileInputRef.current.value = ''
+    openCamera()
   }
 
   const handleSubmit = async () => {
@@ -138,6 +198,33 @@ export default function RegisterFlow() {
 
   return (
     <div className="max-w-lg mx-auto">
+      {/* インブラウザカメラオーバーレイ */}
+      {cameraActive && (
+        <div className="fixed inset-0 z-50 bg-black flex flex-col">
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="flex-1 w-full object-cover"
+          />
+          <div className="p-4 flex gap-3 bg-black safe-area-bottom">
+            <button
+              onClick={closeCamera}
+              className="flex-1 border border-white/60 text-white py-4 rounded-xl font-medium text-sm"
+            >
+              キャンセル
+            </button>
+            <button
+              onClick={takePhoto}
+              className="flex-[2] bg-white text-black py-4 rounded-xl font-bold text-base"
+            >
+              📷 撮影する
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ステップバー */}
       <div className="flex items-center mb-8">
         {STEPS.map((label, i) => {
@@ -163,27 +250,27 @@ export default function RegisterFlow() {
         <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
           <h2 className="font-bold text-lg text-gray-800">商品を撮影する</h2>
 
+          {/* ファイル入力（getUserMedia非対応端末のフォールバック） */}
           <input
             ref={fileInputRef}
-            id="camera-capture"
             type="file"
             accept="image/*"
             capture="environment"
             className="hidden"
-            onChange={handleCapture}
+            onChange={handleFileCapture}
           />
 
           {preview ? (
             <img src={preview} alt="撮影した商品" className="w-full rounded-xl object-contain max-h-56 bg-gray-50" />
           ) : (
-            <label
-              htmlFor="camera-capture"
-              className="w-full border-2 border-purple-600 bg-white rounded-xl p-8 text-center text-purple-700 hover:bg-purple-50 transition-colors cursor-pointer flex flex-col items-center"
+            <button
+              onClick={openCamera}
+              className="w-full border-2 border-purple-600 bg-white rounded-xl p-8 text-center text-purple-700 hover:bg-purple-50 transition-colors flex flex-col items-center"
             >
               <p className="text-3xl mb-2">📷</p>
               <p className="font-medium">商品を撮影する</p>
               <p className="text-sm mt-1 text-purple-500">商品名と賞味期限が両方映ると入力が簡単になります</p>
-            </label>
+            </button>
           )}
 
           {scanning && <p className="text-center text-sm text-indigo-600 animate-pulse">商品情報を読み取り中...</p>}
@@ -193,13 +280,12 @@ export default function RegisterFlow() {
           )}
 
           {preview && !scanning && (
-            <label
-              htmlFor="camera-capture"
+            <button
               onClick={handleRetry}
-              className="w-full border-2 border-purple-600 bg-white rounded-xl py-3 text-center text-purple-700 hover:bg-purple-50 transition-colors cursor-pointer block font-medium text-sm"
+              className="w-full border-2 border-purple-600 bg-white rounded-xl py-3 text-center text-purple-700 hover:bg-purple-50 transition-colors font-medium text-sm"
             >
               📷 撮り直す
-            </label>
+            </button>
           )}
 
           {form.name && (
