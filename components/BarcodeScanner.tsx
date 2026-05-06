@@ -93,6 +93,7 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
 
           <input
             ref={inputRef}
+            id="camera-capture"
             type="file"
             accept="image/*"
             capture="environment"
@@ -101,12 +102,21 @@ export default function BarcodeScanner({ onDetected, onClose }: Props) {
           />
 
           {!loading && (
-            <button
-              onClick={preview ? handleRetry : () => inputRef.current?.click()}
-              className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700"
-            >
-              {preview ? '📷 撮り直す' : '📷 カメラで撮影する'}
-            </button>
+            preview ? (
+              <button
+                onClick={handleRetry}
+                className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700"
+              >
+                📷 撮り直す
+              </button>
+            ) : (
+              <label
+                htmlFor="camera-capture"
+                className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700 cursor-pointer flex items-center justify-center"
+              >
+                📷 カメラで撮影する
+              </label>
+            )
           )}
         </div>
       </div>

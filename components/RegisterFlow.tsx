@@ -129,17 +129,17 @@ export default function RegisterFlow() {
         })}
       </div>
 
-      {/* Step 1: バーコードスキャン */}
+      {/* Step 1: 商品撮影 */}
       {step === 1 && (
         <div className="bg-white rounded-2xl border border-gray-200 p-6 space-y-4">
-          <h2 className="font-bold text-lg text-gray-800">バーコードをスキャン</h2>
+          <h2 className="font-bold text-lg text-gray-800">商品を撮影する</h2>
           <button
             onClick={() => setShowScanner(true)}
-            className="w-full border-2 border-dashed border-gray-300 rounded-xl p-8 text-center text-gray-500 hover:border-indigo-400 hover:text-indigo-600 transition-colors"
+            className="w-full border-2 border-purple-600 bg-white rounded-xl p-8 text-center text-purple-700 hover:bg-purple-50 transition-colors"
           >
             <p className="text-3xl mb-2">📷</p>
-            <p className="font-medium">バーコードをスキャン</p>
-            <p className="text-sm mt-1">食品のJANコードを読み取ります</p>
+            <p className="font-medium">商品を撮影する</p>
+            <p className="text-sm mt-1 text-purple-500">商品名と賞味期限が両方映ると入力が簡単になります</p>
           </button>
           {scanning && <p className="text-center text-sm text-indigo-600">商品情報を取得中...</p>}
           {form.name && (
@@ -160,11 +160,19 @@ export default function RegisterFlow() {
               />
             </div>
           )}
+          {form.name && (
+            <button
+              onClick={() => setStep(2)}
+              className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700"
+            >
+              次へ進む
+            </button>
+          )}
           <button
             onClick={() => setStep(2)}
-            className="w-full bg-indigo-600 text-white py-3 rounded-xl font-semibold hover:bg-indigo-700"
+            className="w-full border border-dashed border-gray-300 bg-white text-gray-400 py-3 rounded-xl text-sm hover:bg-gray-50 transition-colors"
           >
-            {form.name ? '次へ進む' : 'スキップして手入力'}
+            スキップして手入力
           </button>
         </div>
       )}
