@@ -17,6 +17,8 @@ export type Item = {
   barcode: string | null
   image_url: string | null
   notify_days: number
+  send_email: boolean
+  sync_calendar: boolean
   notified_at: string | null
   created_at: string
 }

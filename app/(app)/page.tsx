@@ -51,14 +51,19 @@ export default function HomePage() {
 
   const handleExport = async (type: 'ics' | 'csv') => {
     const { data: { session } } = await supabase.auth.getSession()
-    const res = await fetch(`/api/export/${type}`, {
+    const params = new URLSearchParams()
+    if (type === 'csv') {
+      if (category !== 'all') params.set('category', category)
+      if (search) params.set('search', search)
+    }
+    const res = await fetch(`/api/export/${type}?${params}`, {
       headers: { Authorization: `Bearer ${session?.access_token}` }
     })
     const blob = await res.blob()
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = type === 'ics' ? 'expiry.ics' : 'expiry.csv'
+    a.download = type === 'ics' ? 'expiry.ics' : '長期保存アイテムリスト.csv'
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -70,7 +75,7 @@ export default function HomePage() {
         <div className="flex gap-2 text-sm items-center">
           <span className="text-white/50 text-xs">{items.length}件</span>
           <button onClick={() => handleExport('ics')} className="text-white/60 hover:text-white text-xs transition-colors">📅 .ics</button>
-          <button onClick={() => handleExport('csv')} className="text-white/60 hover:text-white text-xs transition-colors">📄 CSV</button>
+          <button onClick={() => handleExport('csv')} className="text-white/60 hover:text-white text-xs transition-colors">📤 共有</button>
         </div>
       </div>
 

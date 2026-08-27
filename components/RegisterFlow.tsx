@@ -15,6 +15,7 @@ type FormData = {
   quantity: number
   notify_days: number
   send_email: boolean
+  sync_calendar: boolean
   is_disaster: boolean
   barcode: string
 }
@@ -25,7 +26,6 @@ const NOTIFY_OPTIONS = [3, 7, 14, 30]
 export default function RegisterFlow() {
   const router = useRouter()
   const [step, setStep] = useState<Step>(1)
-  const [userEmail, setUserEmail] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
@@ -43,15 +43,10 @@ export default function RegisterFlow() {
     quantity: 1,
     notify_days: 14,
     send_email: true,
+    sync_calendar: true,
     is_disaster: false,
     barcode: '',
   })
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUserEmail(session?.user?.email ?? '')
-    })
-  }, [])
 
   // カメラストリームをvideo要素にセット
   useEffect(() => {
@@ -366,7 +361,7 @@ export default function RegisterFlow() {
 
           {/* 通知設定 */}
           <div className="border border-gray-200 rounded-xl p-4 space-y-3">
-            <label className="block text-sm font-medium text-gray-700">リマインドするタイミング</label>
+            <label className="block text-sm font-medium text-gray-700">メールでリマインドするタイミング</label>
             <div className="flex gap-2 flex-wrap">
               {NOTIFY_OPTIONS.map((days) => (
                 <button
@@ -383,18 +378,17 @@ export default function RegisterFlow() {
                 </button>
               ))}
             </div>
-            <label className="flex items-center gap-2 cursor-pointer pt-1">
-              <input
-                type="checkbox"
-                checked={form.send_email}
-                onChange={(e) => setForm((f) => ({ ...f, send_email: e.target.checked }))}
-                className="w-4 h-4 rounded"
-              />
-              <span className="text-sm text-gray-700">
-                {userEmail ? `${userEmail} にメールを送りますか？` : 'メールでお知らせする'}
-              </span>
-            </label>
           </div>
+
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={form.sync_calendar}
+              onChange={(e) => setForm((f) => ({ ...f, sync_calendar: e.target.checked }))}
+              className="w-4 h-4 rounded"
+            />
+            <span className="text-sm text-gray-700">📅 iOSカレンダーに同期する</span>
+          </label>
 
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={form.is_disaster}
@@ -430,8 +424,8 @@ export default function RegisterFlow() {
                 ['消費期限', form.expiry_date],
                 ['保存場所', form.location || '未設定'],
                 ['数量', String(form.quantity)],
-                ['通知タイミング', `${form.notify_days}日前`],
-                ['メール通知', form.send_email ? '送る' : '送らない'],
+                ['メール通知タイミング', `${form.notify_days}日前`],
+                ['iOSカレンダー同期', form.sync_calendar ? 'する' : 'しない'],
                 ['防災備蓄', form.is_disaster ? '○' : '-'],
               ].map(([label, value]) => (
                 <tr key={label}>

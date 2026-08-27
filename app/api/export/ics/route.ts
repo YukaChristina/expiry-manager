@@ -21,6 +21,8 @@ export async function GET(req: NextRequest) {
   const calendar = ical({ name: '蔵出しカレンダー' })
 
   for (const item of items ?? []) {
+    if (!item.sync_calendar) continue
+
     const expiry = new Date(item.expiry_date)
 
     // 期限日

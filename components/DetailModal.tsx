@@ -19,6 +19,8 @@ export default function DetailModal({ item, onClose, onUpdate, onDelete }: Props
     location: item.location ?? '',
     quantity: item.quantity,
     notify_days: item.notify_days,
+    send_email: item.send_email,
+    sync_calendar: item.sync_calendar,
     is_disaster: item.is_disaster,
   })
   const [saving, setSaving] = useState(false)
@@ -89,11 +91,17 @@ export default function DetailModal({ item, onClose, onUpdate, onDelete }: Props
             </div>
           </div>
           <div>
-            <label className={labelClass}>通知タイミング（期限の何日前）</label>
+            <label className={labelClass}>メールでリマインドするタイミング（期限の何日前）</label>
             <input type="number" value={form.notify_days} min={1}
               onChange={(e) => setForm((f) => ({ ...f, notify_days: Number(e.target.value) }))}
               className={inputClass} />
           </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={form.sync_calendar}
+              onChange={(e) => setForm((f) => ({ ...f, sync_calendar: e.target.checked }))}
+              className="w-4 h-4 rounded accent-[#3d5a9c]" />
+            <span className="text-sm text-[#1a2e52]">📅 iOSカレンダーに同期する</span>
+          </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={form.is_disaster}
               onChange={(e) => setForm((f) => ({ ...f, is_disaster: e.target.checked }))}

@@ -26,7 +26,12 @@ export async function GET(req: NextRequest) {
     .eq('user_id', user.id)
     .order('expiry_date', { ascending: true })
 
-  if (category && category !== 'all') query = query.eq('category', category)
+  if (category === 'disaster') {
+    // カテゴリが防災備蓄、または防災備蓄フラグが立っているアイテムの両方を対象にする
+    query = query.or('category.eq.disaster,is_disaster.eq.true')
+  } else if (category && category !== 'all') {
+    query = query.eq('category', category)
+  }
   if (search) query = query.ilike('name', `%${search}%`)
 
   const { data, error } = await query

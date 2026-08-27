@@ -14,6 +14,8 @@ create table if not exists items (
   barcode       text,
   image_url     text,
   notify_days   integer default 14,
+  send_email    boolean not null default true,
+  sync_calendar boolean not null default true,
   notified_at   timestamp,
   created_at    timestamp default now()
 );
