@@ -6,6 +6,11 @@ import type { Item } from '@/lib/supabase'
 import MetricCards from '@/components/MetricCards'
 import ItemTable from '@/components/ItemTable'
 
+function todayStamp() {
+  const jst = new Date(Date.now() + 9 * 60 * 60 * 1000)
+  return jst.toISOString().slice(0, 10).replace(/-/g, '')
+}
+
 const CATEGORIES = [
   { value: 'all', label: 'すべて' },
   { value: 'condiment', label: '調味料' },
@@ -64,7 +69,7 @@ export default function HomePage() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = type === 'ics' ? 'expiry.ics' : '長期保存アイテムリスト.csv'
+    a.download = type === 'ics' ? 'expiry.ics' : `長期保存アイテムリスト_${todayStamp()}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }

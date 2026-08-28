@@ -9,7 +9,10 @@ const CATEGORY_LABEL: Record<string, string> = {
   other: 'その他',
 }
 
-const FILENAME = '長期保存アイテムリスト.csv'
+function todayStamp() {
+  const jst = new Date(Date.now() + 9 * 60 * 60 * 1000)
+  return jst.toISOString().slice(0, 10).replace(/-/g, '')
+}
 
 export async function GET(req: NextRequest) {
   const token = (req.headers.get('authorization') ?? '').replace('Bearer ', '')
@@ -50,10 +53,12 @@ export async function GET(req: NextRequest) {
     ].join(',')
   ).join('\n')
 
+  const filename = `長期保存アイテムリスト_${todayStamp()}.csv`
+
   return new NextResponse('﻿' + header + rows, {
     headers: {
       'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="export.csv"; filename*=UTF-8''${encodeURIComponent(FILENAME)}`,
+      'Content-Disposition': `attachment; filename="export.csv"; filename*=UTF-8''${encodeURIComponent(filename)}`,
     },
   })
 }
