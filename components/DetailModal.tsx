@@ -11,19 +11,34 @@ type Props = {
   onDelete: (id: string) => void
 }
 
+const CATEGORIES: { value: Item['categories'][number]; label: string }[] = [
+  { value: 'condiment', label: '調味料' },
+  { value: 'food', label: '食品' },
+  { value: 'disaster', label: '防災備蓄' },
+  { value: 'other', label: 'その他' },
+]
+
 export default function DetailModal({ item, onClose, onUpdate, onDelete }: Props) {
   const [form, setForm] = useState({
     name: item.name,
-    category: item.category,
+    categories: item.categories,
     expiry_date: item.expiry_date,
     location: item.location ?? '',
     quantity: item.quantity,
     notify_days: item.notify_days,
     send_email: item.send_email,
     sync_calendar: item.sync_calendar,
-    is_disaster: item.is_disaster,
   })
   const [saving, setSaving] = useState(false)
+
+  const toggleCategory = (value: Item['categories'][number]) => {
+    setForm((f) => ({
+      ...f,
+      categories: f.categories.includes(value)
+        ? f.categories.filter((c) => c !== value)
+        : [...f.categories, value],
+    }))
+  }
 
   const handleSave = async () => {
     setSaving(true)
@@ -60,14 +75,23 @@ export default function DetailModal({ item, onClose, onUpdate, onDelete }: Props
               className={inputClass} />
           </div>
           <div>
-            <label className={labelClass}>カテゴリ</label>
-            <select value={form.category}
-              onChange={(e) => setForm((f) => ({ ...f, category: e.target.value as Item['category'] }))}
-              className={inputClass}>
-              <option value="condiment">調味料</option>
-              <option value="disaster">防災備蓄</option>
-              <option value="other">その他</option>
-            </select>
+            <label className={labelClass}>カテゴリ（複数選択可）</label>
+            <div className="flex gap-2 flex-wrap">
+              {CATEGORIES.map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  onClick={() => toggleCategory(c.value)}
+                  className={`px-3 py-1.5 rounded text-sm border transition-colors ${
+                    form.categories.includes(c.value)
+                      ? 'bg-[#1a2e52] text-white border-[#1a2e52]'
+                      : 'bg-white text-[#64748b] border-[#c8d4e8] hover:border-[#3d5a9c]'
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
           </div>
           <div>
             <label className={labelClass}>消費期限</label>
@@ -101,12 +125,6 @@ export default function DetailModal({ item, onClose, onUpdate, onDelete }: Props
               onChange={(e) => setForm((f) => ({ ...f, sync_calendar: e.target.checked }))}
               className="w-4 h-4 rounded accent-[#3d5a9c]" />
             <span className="text-sm text-[#1a2e52]">📅 iOSカレンダーに同期する</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={form.is_disaster}
-              onChange={(e) => setForm((f) => ({ ...f, is_disaster: e.target.checked }))}
-              className="w-4 h-4 rounded accent-[#3d5a9c]" />
-            <span className="text-sm text-[#1a2e52]">防災用備蓄として管理</span>
           </label>
         </div>
 

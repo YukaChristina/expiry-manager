@@ -6,11 +6,10 @@ create table if not exists items (
   id            uuid primary key default gen_random_uuid(),
   user_id       uuid references auth.users not null,
   name          text not null,
-  category      text not null default 'other',  -- 'condiment' | 'disaster' | 'other'
+  categories    text[] not null default '{}',  -- 'condiment' | 'food' | 'disaster' | 'other' の配列（複数可）
   expiry_date   date not null,
   location      text,
   quantity      integer default 1,
-  is_disaster   boolean default false,
   barcode       text,
   image_url     text,
   notify_days   integer default 14,

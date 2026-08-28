@@ -9,6 +9,7 @@ import ItemTable from '@/components/ItemTable'
 const CATEGORIES = [
   { value: 'all', label: 'すべて' },
   { value: 'condiment', label: '調味料' },
+  { value: 'food', label: '食品' },
   { value: 'disaster', label: '防災備蓄' },
   { value: 'other', label: 'その他' },
 ]

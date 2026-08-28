@@ -14,7 +14,7 @@ export default function MetricCards({ items }: Props) {
   const total = items.length
   const expired = items.filter((i) => daysLeft(i) < 0).length
   const within30 = items.filter((i) => { const d = daysLeft(i); return d >= 0 && d <= 30 }).length
-  const disaster = items.filter((i) => i.is_disaster).length
+  const disaster = items.filter((i) => i.categories.includes('disaster')).length
 
   const cards = [
     { label: '登録数', value: total, text: 'text-[#1a2e52]', sub: 'text-[#3d5a9c]' },

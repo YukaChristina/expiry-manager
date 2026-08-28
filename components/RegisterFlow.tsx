@@ -7,21 +7,28 @@ import ExpiryInput from './ExpiryInput'
 
 type Step = 1 | 2 | 3
 
+type Category = 'condiment' | 'food' | 'disaster' | 'other'
+
 type FormData = {
   name: string
-  category: 'condiment' | 'disaster' | 'other'
+  categories: Category[]
   expiry_date: string
   location: string
   quantity: number
   notify_days: number
   send_email: boolean
   sync_calendar: boolean
-  is_disaster: boolean
   barcode: string
 }
 
 const STEPS = ['撮影', '情報入力', '確認']
 const NOTIFY_OPTIONS = [3, 7, 14, 30]
+const CATEGORIES: { value: Category; label: string }[] = [
+  { value: 'condiment', label: '調味料' },
+  { value: 'food', label: '食品' },
+  { value: 'disaster', label: '防災備蓄' },
+  { value: 'other', label: 'その他' },
+]
 
 export default function RegisterFlow() {
   const router = useRouter()
@@ -37,16 +44,24 @@ export default function RegisterFlow() {
   const [submitError, setSubmitError] = useState('')
   const [form, setForm] = useState<FormData>({
     name: '',
-    category: 'other',
+    categories: ['other'],
     expiry_date: '',
     location: '',
     quantity: 1,
     notify_days: 14,
     send_email: true,
     sync_calendar: true,
-    is_disaster: false,
     barcode: '',
   })
+
+  const toggleCategory = (value: Category) => {
+    setForm((f) => ({
+      ...f,
+      categories: f.categories.includes(value)
+        ? f.categories.filter((c) => c !== value)
+        : [...f.categories, value],
+    }))
+  }
 
   // カメラストリームをvideo要素にセット
   useEffect(() => {
@@ -321,18 +336,23 @@ export default function RegisterFlow() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">カテゴリ</label>
-            <select value={form.category}
-              onChange={(e) => setForm((f) => ({
-                ...f,
-                category: e.target.value as FormData['category'],
-                is_disaster: e.target.value === 'disaster' ? true : f.is_disaster
-              }))}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-              <option value="condiment">調味料</option>
-              <option value="disaster">防災備蓄</option>
-              <option value="other">その他</option>
-            </select>
+            <label className="block text-sm font-medium text-gray-700 mb-1">カテゴリ（複数選択可）</label>
+            <div className="flex gap-2 flex-wrap">
+              {CATEGORIES.map((c) => (
+                <button
+                  key={c.value}
+                  type="button"
+                  onClick={() => toggleCategory(c.value)}
+                  className={`px-3 py-1.5 rounded-lg text-sm border transition-colors ${
+                    form.categories.includes(c.value)
+                      ? 'bg-indigo-500 text-white border-indigo-500'
+                      : 'bg-white text-gray-600 border-gray-300 hover:border-indigo-300'
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -390,13 +410,6 @@ export default function RegisterFlow() {
             <span className="text-sm text-gray-700">📅 iOSカレンダーに同期する</span>
           </label>
 
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={form.is_disaster}
-              onChange={(e) => setForm((f) => ({ ...f, is_disaster: e.target.checked }))}
-              className="w-4 h-4 rounded" />
-            <span className="text-sm text-gray-700">🛡️ 防災用備蓄として管理する</span>
-          </label>
-
           <div className="flex gap-3">
             <button onClick={() => setStep(1)}
               className="flex-1 border border-gray-300 text-gray-700 py-2.5 rounded-xl text-sm hover:bg-gray-50">
@@ -420,13 +433,12 @@ export default function RegisterFlow() {
             <tbody className="divide-y divide-gray-100">
               {[
                 ['食品名', form.name],
-                ['カテゴリ', { condiment: '調味料', disaster: '防災備蓄', other: 'その他' }[form.category]],
+                ['カテゴリ', form.categories.map((c) => CATEGORIES.find((x) => x.value === c)?.label ?? c).join('・') || '未設定'],
                 ['消費期限', form.expiry_date],
                 ['保存場所', form.location || '未設定'],
                 ['数量', String(form.quantity)],
                 ['メール通知タイミング', `${form.notify_days}日前`],
                 ['iOSカレンダー同期', form.sync_calendar ? 'する' : 'しない'],
-                ['防災備蓄', form.is_disaster ? '○' : '-'],
               ].map(([label, value]) => (
                 <tr key={label}>
                   <td className="py-2 text-gray-500 w-32">{label}</td>

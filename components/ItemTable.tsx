@@ -6,6 +6,7 @@ import DetailModal from './DetailModal'
 
 const CATEGORY_LABEL: Record<string, string> = {
   condiment: '調味料',
+  food: '食品',
   disaster: '防災備蓄',
   other: 'その他',
 }
@@ -67,7 +68,7 @@ export default function ItemTable({ items, onDelete, onUpdate }: Props) {
               return (
                 <tr key={item.id} className="hover:bg-[#ede7da] transition-colors">
                   <td className="px-4 py-3 font-medium text-[#1a1a18]">
-                    {item.is_disaster && <span className="mr-1">🛡️</span>}
+                    {item.categories.includes('disaster') && <span className="mr-1">🛡️</span>}
                     {item.name}
                   </td>
                   <td className="px-4 py-3 text-[#64748b]">{item.expiry_date}</td>
@@ -77,7 +78,7 @@ export default function ItemTable({ items, onDelete, onUpdate }: Props) {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-[#64748b] hidden sm:table-cell">
-                    {CATEGORY_LABEL[item.category] ?? item.category}
+                    {item.categories.map((c) => CATEGORY_LABEL[c] ?? c).join('・')}
                   </td>
                   <td className="px-4 py-3 text-[#64748b] hidden sm:table-cell">{item.location ?? '-'}</td>
                   <td className="px-4 py-3 text-[#64748b] hidden sm:table-cell">{item.quantity}</td>

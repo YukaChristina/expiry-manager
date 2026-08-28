@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const CATEGORY_LABEL: Record<string, string> = {
   condiment: '調味料',
+  food: '食品',
   disaster: '防災備蓄',
   other: 'その他',
 }
@@ -30,10 +31,8 @@ export async function GET(req: NextRequest) {
     .eq('user_id', user.id)
     .order('expiry_date', { ascending: true })
 
-  if (category === 'disaster') {
-    query = query.or('category.eq.disaster,is_disaster.eq.true')
-  } else if (category && category !== 'all') {
-    query = query.eq('category', category)
+  if (category && category !== 'all') {
+    query = query.contains('categories', [category])
   }
   if (search) query = query.ilike('name', `%${search}%`)
 
@@ -43,11 +42,11 @@ export async function GET(req: NextRequest) {
   const rows = (items ?? []).map((item) =>
     [
       item.name,
-      CATEGORY_LABEL[item.category] ?? item.category,
+      item.categories.map((c: string) => CATEGORY_LABEL[c] ?? c).join('・'),
       item.expiry_date,
       item.location ?? '',
       item.quantity,
-      item.is_disaster ? '○' : '',
+      item.categories.includes('disaster') ? '○' : '',
     ].join(',')
   ).join('\n')
 
