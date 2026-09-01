@@ -41,9 +41,10 @@ export async function GET(request: Request) {
     const daysLabel = daysLeft === 0 ? '本日' : `あと${daysLeft}日`
 
     const { error: sendError } = await resend.emails.send({
-      from: 'Expiry Manager <noreply@yuka-studio.net>',
+      from: '長期保存食台帳アプリ <noreply@yuka-studio.net>',
       to: email,
       subject: `【期限注意】${item.name} の消費期限は${daysLabel}です`,
+      text: `${item.name} の消費期限が近づいています。\n\n期限: ${item.expiry_date}（${daysLabel}）\n保存場所: ${item.location || '未設定'}\n数量: ${item.quantity}個\n\nアプリで確認する: ${process.env.NEXT_PUBLIC_APP_URL}`,
       html: `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
           <h2 style="color:#e67e22">⚠️ 消費期限のお知らせ</h2>
