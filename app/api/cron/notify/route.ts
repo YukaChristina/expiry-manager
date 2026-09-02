@@ -44,7 +44,7 @@ export async function GET(request: Request) {
       from: '長期保存食台帳アプリ <noreply@yuka-studio.net>',
       to: email,
       subject: `【期限注意】${item.name} の消費期限は${daysLabel}です`,
-      text: `${item.name} の消費期限が近づいています。\n\n期限: ${item.expiry_date}（${daysLabel}）\n保存場所: ${item.location || '未設定'}\n数量: ${item.quantity}個\n\nアプリで確認する: ${process.env.NEXT_PUBLIC_APP_URL}`,
+      text: `${item.name} の消費期限が近づいています。\n\n期限: ${item.expiry_date}（${daysLabel}）\n保存場所: ${item.location || '未設定'}\n数量: ${item.quantity}個`,
       html: `
         <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
           <h2 style="color:#e67e22">⚠️ 消費期限のお知らせ</h2>
@@ -54,7 +54,6 @@ export async function GET(request: Request) {
             <tr style="background:#f9f9f9"><td style="padding:8px;color:#666">保存場所</td><td style="padding:8px">${item.location || '未設定'}</td></tr>
             <tr><td style="padding:8px;color:#666">数量</td><td style="padding:8px">${item.quantity}個</td></tr>
           </table>
-          <a href="${process.env.NEXT_PUBLIC_APP_URL}" style="display:inline-block;background:#e67e22;color:white;padding:12px 24px;border-radius:6px;text-decoration:none">アプリで確認する</a>
         </div>
       `,
     })
